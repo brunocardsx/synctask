@@ -1,9 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { registerSchema, loginSchema } from '../../schemas/authSchema';
+import { z } from 'zod';
+import { registerSchema, loginSchema } from '../../schemas/authSchema.js';
 
-import prisma from '../../config/prisma';
+import prisma from '../../config/prisma.js';
 
 /**
  * Lida com a lógica de negócio para registrar um novo usuário.
@@ -11,7 +12,7 @@ import prisma from '../../config/prisma';
  * @returns O token JWT gerado.
  * @throws Lança um erro se o email já estiver em uso.
  */
-export const registerNewUser = async (userData: Zod.infer<typeof registerSchema>) => {
+export const registerNewUser = async (userData: z.infer<typeof registerSchema>) => {
     const { name, email, password } = userData;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -35,7 +36,7 @@ export const registerNewUser = async (userData: Zod.infer<typeof registerSchema>
         expiresIn: '1d',
     });
 
-    return token;
+    return { token, userId: user.id };
 };
 
 export const loginUser = async (loginData: z.infer<typeof loginSchema>) => {

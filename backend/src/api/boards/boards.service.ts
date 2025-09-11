@@ -36,6 +36,20 @@ export const getBoardByIdAndOwnerId = async (id: string, ownerId: string) => {
             id: id,
             ownerId: ownerId,
         },
+        include: {
+            columns: {
+                orderBy: {
+                    order: 'asc',
+                },
+                include: {
+                    cards: {
+                        orderBy: {
+                            order: 'asc',
+                        },
+                    },
+                },
+            },
+        },
     });
     return board;
 };

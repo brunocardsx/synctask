@@ -1,14 +1,15 @@
 import request from 'supertest';
-import app from '../app';
+import app from '../app.js';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import { PrismaClient } from '@prisma/client';
 
-import prisma from '../config/prisma';
+import prisma from '../config/prisma.js';
 
 /**
  * Limpa a tabela de usuários antes de cada teste para garantir isolamento.
  * Sem isso, os testes podem interferir uns com os outros.
  */
-beforeEach(async () => {
+beforeAll(async () => {
     await prisma.comment.deleteMany({});
     await prisma.cardAssignee.deleteMany({});
     await prisma.card.deleteMany({});
@@ -116,7 +117,7 @@ describe('POST /api/auth/register', () => {
     
     expect(res.statusCode).toEqual(400);
     expect(res.body.errors).toHaveProperty('password');
-    expect(res.body.errors.password).toContain('Invalid input: expected string, received undefined');
+    expect(res.body.errors.password).toContain('A senha é obrigatória.');
   });
     });
 
@@ -125,17 +126,17 @@ describe('POST /api/auth/register', () => {
             {
                 payload: { name: 'Test', email: 'test@test.com' },
                 expectedField: 'password',
-                expectedMessage: 'Invalid input: expected string, received undefined',
+                expectedMessage: 'A senha é obrigatória.',
             },
             {
                 payload: { name: 'Test', password: 'password123' },
                 expectedField: 'email',
-                expectedMessage: 'Invalid input: expected string, received undefined',
+                expectedMessage: 'O email é obrigatório.',
             },
             {
                 payload: { email: 'test@test.com', password: 'password123' },
                 expectedField: 'name',
-                expectedMessage: 'Invalid input: expected string, received undefined',
+                expectedMessage: 'O nome é obrigatório.',
             },
             {
                 payload: { name: 'Test', email: 'not-an-email', password: 'password123' },
