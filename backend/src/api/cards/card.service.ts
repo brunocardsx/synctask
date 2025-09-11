@@ -1,4 +1,5 @@
-import prisma from '../../config/prisma';
+import prisma from '../../config/prisma.js';
+import { getIO } from '../../socket.js';
 
 export const moveCard = async (cardId: string, newColumnId: string, newOrder: number, userId: string) => {
     return await prisma.$transaction(async (tx) => {
@@ -57,6 +58,17 @@ export const moveCard = async (cardId: string, newColumnId: string, newOrder: nu
                 order: newOrder,
             },
         });
+
+        // 6. Emitir evento Socket.IO após transação bem-sucedida
+        const boardId = card.column.boardId;
+        getIO().to(boardId).emit('card:moved', {
+            cardId,
+            oldColumnId,
+            newColumnId,
+            newOrder,
+            updatedCard
+        });
+        console.log(`📡 Evento 'card:moved' emitido para board ${boardId}`);
 
         return updatedCard;
     });

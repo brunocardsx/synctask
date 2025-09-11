@@ -1,5 +1,6 @@
 import { PrismaClient, PrismaClientKnownRequestError } from '@prisma/client';
-import prisma from '../../config/prisma';
+import prisma from '../../config/prisma.js';
+import { getIO } from '../../socket.js';
 
 export const createBoard = async (name: string, ownerId: string) => {
     // Verify if the ownerId exists in the User table
@@ -74,5 +75,10 @@ export const updateBoard = async (id: string, name: string, ownerId: string) => 
             name: name,
         },
     });
+
+    // Emitir evento Socket.IO para a sala do board
+    getIO().to(id).emit('board:updated', updatedBoard);
+    console.log(`📡 Evento 'board:updated' emitido para board ${id}`);
+
     return updatedBoard;
 };

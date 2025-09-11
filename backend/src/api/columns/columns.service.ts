@@ -1,4 +1,5 @@
-import prisma from '../../config/prisma';
+import prisma from '../../config/prisma.js';
+import { getIO } from '../../socket.js';
 
 export const createColumn = async (title: string, boardId: string, ownerId: string) => {
     const board = await prisma.board.findUnique({
@@ -25,5 +26,10 @@ export const createColumn = async (title: string, boardId: string, ownerId: stri
             order: columnCount,
         },
     });
+
+    // Emitir evento Socket.IO para a sala do board
+    getIO().to(boardId).emit('column:created', column);
+    console.log(`📡 Evento 'column:created' emitido para board ${boardId}`);
+
     return column;
 };

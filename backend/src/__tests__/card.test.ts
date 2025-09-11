@@ -11,6 +11,7 @@ beforeAll(async () => {
   await prisma.user.deleteMany({});
 });
 
+
 afterAll(async () => {
   await prisma.$disconnect();
 });
@@ -29,7 +30,7 @@ describe('PATCH /api/cards/:cardId/move', () => {
     const user = await prisma.user.create({
       data: {
         name: 'Card Mover',
-        email: `mover-${Date.now()}@example.com`,
+        email: `mover-${Date.now()}-${Math.random()}@example.com`,
         password: 'password',
       },
     });
