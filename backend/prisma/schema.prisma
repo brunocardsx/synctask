@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ENUMs para garantir a consistência dos dados
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum ActivityType {
+  BOARD_CREATED
+  COLUMN_CREATED
+  CARD_CREATED
+  CARD_MOVED
+  MEMBER_ADDED
+  COMMENT_ADDED
+}
+
+
+// Modelo provisório do banco de dados
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  memberships    BoardMember[] // quadros dos quais o usuário é membro
+  assignedCards  CardAssignee[] // cartões pelo qual o usuário é responsável
+  comments       Comment[] // comentários feitos pelo usuário
+  activities     Activity[] // atividades realizada pelos usuários
+  ownedBoards    Board[] // Added this line for the inverse relation
+}
+
+model Board {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+
+  // Relacionamentos
+  members   BoardMember[]
+  columns   Column[]
+  activities Activity[]
+}
+
+// Tabela de Junção para Membros e Permissões (Muitos-para-Muitos)
+model BoardMember {
+  userId  String
+  boardId String
+  role    Role     @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  // Relacionamentos
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board   Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@id([userId, boardId])
+}
+
+model Column {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  // Relacionamentos
+  cards     Card[]
+}
+
+model Card {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  order       Int      // Posição do cartão na coluna
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  columnId    String
+  column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  // Relacionamentos
+  assignees CardAssignee[]
+  comments  Comment[]
+}
+
+// Responsáveis pelo cartão
+model CardAssignee {
+  cardId String
+  userId String
+  assignedAt DateTime @default(now())
+
+  // Relacionamentos
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, userId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cardId    String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  type      ActivityType
+  details   Json?
+  createdAt DateTime @default(now())
+
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

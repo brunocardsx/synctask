@@ -1,0 +1,16 @@
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: synctask
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: synctask_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
