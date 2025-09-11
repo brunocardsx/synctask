@@ -3,6 +3,7 @@ import App from '../App';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import DashboardPage from '../pages/DashboardPage';
+import ProtectedRoute from './ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
@@ -11,8 +12,13 @@ export const router = createBrowserRouter([
     children: [
       // As rotas filhas que serão renderizadas dentro do <Outlet>
       {
-        path: '/',
-        element: <DashboardPage />,
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: '/',
+            element: <DashboardPage />,
+          },
+        ],
       },
       {
         path: '/login',
