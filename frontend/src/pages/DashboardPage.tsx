@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import apiClient from '../services/api';
 
 interface Board {
@@ -54,10 +55,11 @@ export default function DashboardPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {boards.map((board) => (
-            <div key={board.id} className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold text-gray-800">{board.name}</h2>
-              {/* Add more board details or a link to the board page here */}
-            </div>
+            <Link key={board.id} to={`/board/${board.id}`}>
+              <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow cursor-pointer">
+                <h2 className="text-xl font-semibold text-gray-800">{board.name}</h2>
+              </div>
+            </Link>
           ))}
         </div>
       )}
