@@ -7,10 +7,12 @@ import jwt from 'jsonwebtoken';
  * Limpa as tabelas antes de cada conjunto de testes para garantir um estado limpo.
  */
 beforeAll(async () => {
+  // Limpa na ordem correta: primeiro filhos, depois pais
   await prisma.column.deleteMany({});
   await prisma.board.deleteMany({});
   await prisma.user.deleteMany({});
 });
+
 
 afterAll(async () => {
   await prisma.$disconnect();
@@ -26,7 +28,7 @@ describe('POST /api/boards/:boardId/columns', () => {
     const user = await prisma.user.create({
       data: {
         name: 'Column Tester',
-        email: `tester-${Date.now()}@example.com`,
+        email: `tester-${Date.now()}-${Math.random()}@example.com`,
         password: 'password123',
       },
     });
