@@ -8,9 +8,7 @@ export const createBoard = async (req: Request, res: Response) => {
         const validatedData = createBoardSchema.parse(req.body);
         const { name } = validatedData;
 
-        const ownerId = (req as any).userId;
-
-        console.log('Owner ID from token:', ownerId);
+        const ownerId = req.userId;
 
         if (!ownerId) {
             return res.status(401).json({ message: 'Unauthorized: User ID not found.' });
@@ -44,7 +42,7 @@ export const createBoard = async (req: Request, res: Response) => {
 
 export const getBoards = async (req: Request, res: Response) => {
     try {
-        const ownerId = (req as any).userId;
+        const ownerId = req.userId;
 
         if (!ownerId) {
             return res.status(401).json({ message: 'Unauthorized: User ID not found.' });
@@ -62,7 +60,7 @@ export const getBoards = async (req: Request, res: Response) => {
 export const getBoardById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const ownerId = (req as any).userId;
+        const ownerId = req.userId;
 
         if (!ownerId) {
             return res.status(401).json({ message: 'Unauthorized: User ID not found.' });
@@ -86,7 +84,7 @@ export const updateBoard = async (req: Request, res: Response) => {
         const { id } = req.params;
         const validatedData = updateBoardSchema.parse(req.body);
         const { name } = validatedData;
-        const ownerId = (req as any).userId;
+        const ownerId = req.userId;
 
         if (!ownerId) {
             return res.status(401).json({ message: 'Unauthorized: User ID not found.' });

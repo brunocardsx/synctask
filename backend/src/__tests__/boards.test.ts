@@ -1,16 +1,16 @@
 import request from 'supertest';
-import app from '../app';
+import app from '../app.js';
 import { PrismaClient } from '@prisma/client';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import jwt from 'jsonwebtoken';
 
-import prisma from '../config/prisma';
+import prisma from '../config/prisma.js';
 
 /**
  * Limpa as tabelas de board e user antes de cada teste para garantir isolamento.
  */
-beforeEach(async () => {
+beforeAll(async () => {
   await prisma.board.deleteMany({});
-  // await prisma.user.deleteMany({}); // Temporarily comment out this line
 });
 
 afterAll(async () => {
@@ -20,18 +20,15 @@ afterAll(async () => {
 describe('POST /api/boards', () => {
   it('should allow an authenticated user to create a board', async () => {
     // --- Arrange ---
-    // 1. Crie um usuário diretamente com Prisma para garantir que ele exista.
-    const user = await prisma.user.create({
-      data: {
+    // 1. Registre um usuário via API para garantir que ele exista e esteja autenticado.
+    const userCredentials = {
         name: 'Board Creator',
         email: 'creator@example.com',
-        password: 'hashedpassword',
-      },
-    });
-
-
-    // 2. Gere um token JWT válido para este usuário.
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'default-secret');
+        password: 'password123',
+    };
+    const registerRes = await request(app).post('/api/auth/register').send(userCredentials);
+    const token = registerRes.body.token;
+    const user = { id: registerRes.body.userId }; // Assuming the register response returns userId
 
     // 3. Prepare os dados para o novo board.
     const boardData = { name: 'My New Project Board' };
@@ -118,32 +115,62 @@ describe('GET /api/boards', () => {
 });
 
 describe('GET /api/boards/:id', () => {
-  it('should return a single board by ID for an authenticated owner', async () => {
-    // Arrange: Create a user and a board for that user
-    const user = await prisma.user.create({
-      data: {
-        name: 'Single Board User',
-        email: 'single@example.com',
-        password: 'hashedpassword'
-      },
-    });
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'default-secret');
-
-    const board = await prisma.board.create({
-      data: { name: 'My Specific Board', ownerId: user.id },
-    });
-
-    // Act: Request the specific board
-    const res = await request(app)
-      .get(`/api/boards/${board.id}`)
-      .set('Authorization', `Bearer ${token}`);
-
-    // Assert: Check the response
-    expect(res.statusCode).toEqual(200);
-    expect(res.body).toHaveProperty('id', board.id);
-    expect(res.body).toHaveProperty('name', board.name);
-    expect(res.body).toHaveProperty('ownerId', user.id);
+  it('should return a single board with its columns and cards correctly ordered', async () => {
+  // --- Arrange ---
+  // 1. Crie um usuário e seu token
+  const user = await prisma.user.create({
+    data: {
+      name: 'Deep Fetch User',
+      email: `deepfetch-${Date.now()}@example.com`,
+      password: 'hashedpassword',
+    },
   });
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'default-secret');
+
+  // 2. Crie um board para este usuário
+  const board = await prisma.board.create({
+    data: { name: 'My Detailed Board', ownerId: user.id },
+  });
+
+  // 3. Crie colunas e cards em uma ordem específica para testar a ordenação
+  const column2 = await prisma.column.create({
+    data: { boardId: board.id, title: 'In Progress', order: 1 },
+  });
+  const column1 = await prisma.column.create({
+    data: { boardId: board.id, title: 'To Do', order: 0 },
+  });
+
+  const card2_col1 = await prisma.card.create({
+    data: { columnId: column1.id, title: 'Task 2', order: 1 },
+  });
+  const card1_col1 = await prisma.card.create({
+    data: { columnId: column1.id, title: 'Task 1', order: 0 },
+  });
+
+  // --- Act ---
+  // 4. Busque o board pela API
+  const res = await request(app)
+    .get(`/api/boards/${board.id}`)
+    .set('Authorization', `Bearer ${token}`);
+
+  // --- Assert ---
+  // 5. Verifique a estrutura completa da resposta
+  expect(res.statusCode).toEqual(200);
+  expect(res.body.id).toBe(board.id);
+  
+  // 5a. Verifique se as colunas estão presentes e ordenadas
+  expect(res.body).toHaveProperty('columns');
+  expect(res.body.columns).toHaveLength(2);
+  expect(res.body.columns[0].title).toBe('To Do'); // Ordem correta (0)
+  expect(res.body.columns[1].title).toBe('In Progress'); // Ordem correta (1)
+
+  // 5b. Verifique se os cards estão presentes, aninhados e ordenados
+  const toDoColumn = res.body.columns[0];
+  expect(toDoColumn).toHaveProperty('cards');
+  expect(toDoColumn.cards).toHaveLength(2);
+  expect(toDoColumn.cards[0].title).toBe('Task 1'); // Ordem correta (0)
+  expect(toDoColumn.cards[1].title).toBe('Task 2'); // Ordem correta (1)
+});
 
   it('should return 404 if the board does not exist', async () => {
     // Arrange: Create a user and token

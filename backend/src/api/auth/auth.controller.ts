@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { registerSchema, loginSchema } from '../../schemas/authSchema';
-import * as authService from './auth.service';
+import { registerSchema, loginSchema } from '../../schemas/authSchema.js';
+import * as authService from './auth.service.js';
 
 /**
  * Lida com a requisição HTTP para registro de usuário.
@@ -11,9 +11,9 @@ export const registerUser = async (req: Request, res: Response) => {
     try {
         const validatedData = registerSchema.parse(req.body);
 
-        const token = await authService.registerNewUser(validatedData);
+        const { token, userId } = await authService.registerNewUser(validatedData);
 
-        return res.status(201).json({ token });
+        return res.status(201).json({ token, userId });
 
     } catch (error) {
         if (error instanceof z.ZodError) {
