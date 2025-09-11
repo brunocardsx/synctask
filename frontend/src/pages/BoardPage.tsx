@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { DndContext } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { useSocket } from '../context/SocketContext';
 import apiClient from '../services/api';
+import Column from '../components/Column';
 
 interface Card {
   id: string;
@@ -58,7 +61,42 @@ export default function BoardPage() {
           },
         });
         
-        setBoard(response.data);
+        // Adicionar cards de exemplo para testar drag & drop
+        const boardData = response.data;
+        if (boardData.columns.length > 0) {
+          // Adicionar cards de exemplo na primeira coluna
+          boardData.columns[0].cards = [
+            {
+              id: 'card-1',
+              title: 'Implementar autenticação',
+              description: 'Criar sistema de login e registro de usuários',
+              order: 0,
+              columnId: boardData.columns[0].id
+            },
+            {
+              id: 'card-2', 
+              title: 'Configurar banco de dados',
+              description: 'Setup do PostgreSQL e Prisma',
+              order: 1,
+              columnId: boardData.columns[0].id
+            }
+          ];
+          
+          // Cards na segunda coluna
+          if (boardData.columns[1]) {
+            boardData.columns[1].cards = [
+              {
+                id: 'card-3',
+                title: 'Implementar WebSockets',
+                description: 'Sistema de tempo real com Socket.IO',
+                order: 0,
+                columnId: boardData.columns[1].id
+              }
+            ];
+          }
+        }
+        
+        setBoard(boardData);
       } catch (err) {
         console.error('Erro ao carregar board:', err);
         setError('Erro ao carregar o board');
@@ -69,6 +107,96 @@ export default function BoardPage() {
 
     fetchBoard();
   }, [boardId]);
+
+  // Função para lidar com drag over (mover entre colunas)
+  const handleDragOver = (event: any) => {
+    const { active, over } = event;
+    
+    if (!over || !board) return;
+    
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    
+    // Encontrar a coluna de origem e destino
+    const activeColumn = board.columns.find(col => 
+      col.cards.some(card => card.id === activeId)
+    );
+    const overColumn = board.columns.find(col => 
+      col.id === overId || col.cards.some(card => card.id === overId)
+    );
+    
+    if (!activeColumn || !overColumn || activeColumn.id === overColumn.id) {
+      return;
+    }
+    
+    // Mover card entre colunas
+    setBoard(currentBoard => {
+      if (!currentBoard) return null;
+      
+      const newColumns = currentBoard.columns.map(column => {
+        if (column.id === activeColumn.id) {
+          return {
+            ...column,
+            cards: column.cards.filter(card => card.id !== activeId)
+          };
+        }
+        
+        if (column.id === overColumn.id) {
+          const cardToMove = activeColumn.cards.find(card => card.id === activeId);
+          if (cardToMove) {
+            return {
+              ...column,
+              cards: [...column.cards, { ...cardToMove, columnId: column.id }]
+            };
+          }
+        }
+        
+        return column;
+      });
+      
+      return { ...currentBoard, columns: newColumns };
+    });
+  };
+  
+  // Função para lidar com o fim do drag
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    
+    if (!over || !board) return;
+    
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    
+    // Encontrar a coluna que contém o card ativo
+    const activeColumn = board.columns.find(col => 
+      col.cards.some(card => card.id === activeId)
+    );
+    
+    if (!activeColumn) return;
+    
+    // Se estamos reordenando dentro da mesma coluna
+    const activeCardIndex = activeColumn.cards.findIndex(card => card.id === activeId);
+    const overCardIndex = activeColumn.cards.findIndex(card => card.id === overId);
+    
+    if (activeCardIndex !== -1 && overCardIndex !== -1) {
+      setBoard(currentBoard => {
+        if (!currentBoard) return null;
+        
+        const newColumns = currentBoard.columns.map(column => {
+          if (column.id === activeColumn.id) {
+            const newCards = arrayMove(column.cards, activeCardIndex, overCardIndex);
+            return { ...column, cards: newCards };
+          }
+          return column;
+        });
+        
+        return { ...currentBoard, columns: newColumns };
+      });
+    }
+    
+    console.log('Drag ended:', { activeId, overId });
+    // TODO: Aqui você implementaria a chamada para a API para salvar a nova posição
+  };
 
   // Configuração do Socket
   useEffect(() => {
@@ -118,39 +246,22 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold mb-6">{board.name}</h1>
-      
-      <div className="flex space-x-6 overflow-x-auto">
-        {board.columns.map((column) => (
-          <div key={column.id} className="bg-gray-100 p-4 rounded-lg min-w-80 max-w-80">
-            <h2 className="text-xl font-semibold mb-4">{column.title}</h2>
-            
-            <div className="space-y-3">
-              {column.cards.map((card) => (
-                <div key={card.id} className="bg-white p-3 rounded shadow-sm">
-                  <h3 className="font-medium">{card.title}</h3>
-                  {card.description && (
-                    <p className="text-sm text-gray-600 mt-1">{card.description}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-            
-            {column.cards.length === 0 && (
-              <div className="text-gray-500 text-center py-8 text-sm">
-                Nenhum card nesta coluna
-              </div>
-            )}
-          </div>
-        ))}
+    <DndContext onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
+      <div className="p-4">
+        <h1 className="text-3xl font-bold mb-6">{board.name}</h1>
         
-        {board.columns.length === 0 && (
-          <div className="text-gray-500 text-center py-8">
-            Nenhuma coluna criada ainda
-          </div>
-        )}
+        <div className="flex space-x-6 overflow-x-auto">
+          {board.columns.map((column) => (
+            <Column key={column.id} column={column} />
+          ))}
+          
+          {board.columns.length === 0 && (
+            <div className="text-gray-500 text-center py-8">
+              Nenhuma coluna criada ainda
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </DndContext>
   );
 }
