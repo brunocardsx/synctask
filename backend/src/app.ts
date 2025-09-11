@@ -2,12 +2,14 @@ import express from 'express';
 import authRoutes from './api/auth/auth.route.js';
 import boardsRoutes from './api/boards/boards.route.js';
 import cardRoutes from './api/cards/card.route.js';
+import cors from 'cors';
 
 const app = express();
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
 // Routes
 app.use('/api/auth', authRoutes);
