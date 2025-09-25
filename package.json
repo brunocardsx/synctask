@@ -4,7 +4,14 @@
   "description": "Root package for SyncTask application",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+    "dev": "npm run build:backend && npm run start:db && concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:backend": "npm run build --prefix backend",
+    "start:db": "cd backend && docker-compose up -d",
+    "stop:db": "cd backend && docker-compose down",
+    "setup": "npm install && npm run build:backend && npm run start:db",
+    "clean": "npm run stop:db && rm -rf backend/dist backend/node_modules frontend/node_modules node_modules"
   },
   "keywords": [],
   "author": "",
