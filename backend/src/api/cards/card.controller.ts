@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { moveCardSchema } from '../../schemas/cardSchema';
-import * as cardService from './card.service';
+import { moveCardSchema } from '../../schemas/cardSchema.js';
+import * as cardService from './card.service.js';
 
 export const moveCard = async (req: Request, res: Response) => {
     try {
@@ -10,6 +10,10 @@ export const moveCard = async (req: Request, res: Response) => {
 
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized: User ID not found.' });
+        }
+
+        if (!cardId) {
+            return res.status(400).json({ message: 'Card ID is required.' });
         }
 
         const validatedData = moveCardSchema.parse(req.body);

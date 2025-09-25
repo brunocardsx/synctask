@@ -1,4 +1,4 @@
-import { PrismaClient, PrismaClientKnownRequestError } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import prisma from '../../config/prisma.js';
 import { getIO } from '../../socket.js';
 

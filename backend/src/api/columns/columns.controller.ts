@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { createColumnSchema } from '../../schemas/columnSchema';
-import * as columnService from './columns.service';
+import { createColumnSchema } from '../../schemas/columnSchema.js';
+import * as columnService from './columns.service.js';
 
 export const createColumn = async (req: Request, res: Response) => {
     try {
@@ -10,6 +10,10 @@ export const createColumn = async (req: Request, res: Response) => {
 
         if (!ownerId) {
             return res.status(401).json({ message: 'Unauthorized: User ID not found.' });
+        }
+
+        if (!boardId) {
+            return res.status(400).json({ message: 'Board ID is required.' });
         }
 
         const validatedData = createColumnSchema.parse(req.body);
