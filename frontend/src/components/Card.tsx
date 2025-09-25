@@ -1,15 +1,22 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-interface CardProps {
-  card: {
-    id: string;
-    title: string;
-    description?: string;
-  };
+interface CardType {
+  id: string;
+  title: string;
+  description?: string;
+  order: number;
+  columnId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export default function Card({ card }: CardProps) {
+interface CardProps {
+  card: CardType;
+  onCardClick: (card: CardType) => void;
+}
+
+export default function Card({ card, onCardClick }: CardProps) {
   const {
     attributes,
     listeners,
@@ -36,6 +43,10 @@ export default function Card({ card }: CardProps) {
         hover:shadow-md transition-shadow
         ${isDragging ? 'opacity-50' : 'opacity-100'}
       `}
+      onClick={(e) => {
+        e.stopPropagation();
+        onCardClick(card);
+      }}
     >
       <h3 className="font-medium text-gray-800">{card.title}</h3>
       {card.description && (

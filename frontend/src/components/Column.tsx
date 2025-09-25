@@ -1,6 +1,7 @@
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import Card from './Card';
+import AddCardButton from './AddCardButton';
 
 interface CardType {
   id: string;
@@ -8,6 +9,8 @@ interface CardType {
   description?: string;
   order: number;
   columnId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ColumnType {
@@ -19,9 +22,11 @@ interface ColumnType {
 
 interface ColumnProps {
   column: ColumnType;
+  onCardClick: (card: CardType) => void;
+  onCardAdded: (card: CardType) => void;
 }
 
-export default function Column({ column }: ColumnProps) {
+export default function Column({ column, onCardClick, onCardAdded }: ColumnProps) {
   const { setNodeRef } = useDroppable({
     id: column.id,
   });
@@ -37,7 +42,7 @@ export default function Column({ column }: ColumnProps) {
         <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
           {column.cards.length > 0 ? (
             column.cards.map(card => (
-              <Card key={card.id} card={card} />
+              <Card key={card.id} card={card} onCardClick={onCardClick} />
             ))
           ) : (
             <div className="text-gray-500 text-center py-8 text-sm border-2 border-dashed border-gray-300 rounded-lg">
@@ -45,6 +50,11 @@ export default function Column({ column }: ColumnProps) {
             </div>
           )}
         </SortableContext>
+        
+        <AddCardButton 
+          columnId={column.id} 
+          onCardAdded={onCardAdded}
+        />
       </div>
     </div>
   );

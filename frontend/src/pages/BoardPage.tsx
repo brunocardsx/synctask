@@ -5,6 +5,7 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { useSocket } from '../context/SocketContext';
 import apiClient from '../services/api';
 import Column from '../components/Column';
+import CardModal from '../components/CardModal';
 
 interface Card {
   id: string;
@@ -42,6 +43,8 @@ export default function BoardPage() {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Busca inicial dos dados do board
   useEffect(() => {
@@ -198,6 +201,58 @@ export default function BoardPage() {
     // TODO: Aqui você implementaria a chamada para a API para salvar a nova posição
   };
 
+  // Funções para lidar com cards
+  const handleCardClick = (card: Card) => {
+    setSelectedCard(card);
+    setIsModalOpen(true);
+  };
+
+  const handleCardUpdated = (updatedCard: Card) => {
+    setBoard(currentBoard => {
+      if (!currentBoard) return null;
+      
+      const newColumns = currentBoard.columns.map(column => ({
+        ...column,
+        cards: column.cards.map(card => 
+          card.id === updatedCard.id ? updatedCard : card
+        )
+      }));
+      
+      return { ...currentBoard, columns: newColumns };
+    });
+  };
+
+  const handleCardDeleted = (cardId: string) => {
+    setBoard(currentBoard => {
+      if (!currentBoard) return null;
+      
+      const newColumns = currentBoard.columns.map(column => ({
+        ...column,
+        cards: column.cards.filter(card => card.id !== cardId)
+      }));
+      
+      return { ...currentBoard, columns: newColumns };
+    });
+  };
+
+  const handleCardAdded = (newCard: Card) => {
+    setBoard(currentBoard => {
+      if (!currentBoard) return null;
+      
+      const newColumns = currentBoard.columns.map(column => {
+        if (column.id === newCard.columnId) {
+          return {
+            ...column,
+            cards: [...column.cards, newCard]
+          };
+        }
+        return column;
+      });
+      
+      return { ...currentBoard, columns: newColumns };
+    });
+  };
+
   // Configuração do Socket
   useEffect(() => {
     socket.connect();
@@ -252,7 +307,12 @@ export default function BoardPage() {
         
         <div className="flex space-x-6 overflow-x-auto">
           {board.columns.map((column) => (
-            <Column key={column.id} column={column} />
+            <Column 
+              key={column.id} 
+              column={column} 
+              onCardClick={handleCardClick}
+              onCardAdded={handleCardAdded}
+            />
           ))}
           
           {board.columns.length === 0 && (
@@ -262,6 +322,17 @@ export default function BoardPage() {
           )}
         </div>
       </div>
+      
+      <CardModal
+        card={selectedCard}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedCard(null);
+        }}
+        onCardUpdated={handleCardUpdated}
+        onCardDeleted={handleCardDeleted}
+      />
     </DndContext>
   );
 }
