@@ -1,68 +1,65 @@
-# 🚀 SyncTask - Collaborative Task Management
+# 🚀 SyncTask - Meu projeto de gerenciamento de tarefas
 
-Um sistema moderno de gerenciamento de tarefas colaborativo com tempo real, construído com React, Node.js, TypeScript e PostgreSQL.
+Oi! Esse é o meu projeto de gerenciamento de tarefas que estou desenvolvendo para aprender mais sobre desenvolvimento web. É tipo um Trello, mas mais simples e focado no aprendizado.
 
-## ✨ Funcionalidades
+## 🎯 O que eu consegui fazer até agora
 
-- 🔐 **Autenticação JWT** - Sistema seguro de login/registro
-- 📋 **Boards Colaborativos** - Crie e gerencie quadros de tarefas
-- 🎯 **Drag & Drop** - Interface intuitiva para mover cards
-- ⚡ **Tempo Real** - WebSockets para colaboração instantânea
-- 🎨 **UI Moderna** - Interface responsiva com Tailwind CSS
-- 🔒 **Segurança** - Validação robusta com Zod
+- 🔐 **Login/Registro** - Sistema de autenticação com JWT (ainda estou aprendendo isso)
+- 📋 **Boards** - Criar quadros para organizar tarefas
+- 🎯 **Drag & Drop** - Arrastar cards entre colunas (isso foi bem legal de implementar!)
+- ⚡ **Tempo Real** - WebSockets para ver mudanças em tempo real
+- 🎨 **Interface** - Tentei deixar bonito com Tailwind CSS
+- 🔒 **Validação** - Zod para validar dados (muito útil!)
 
-## 🛠️ Tech Stack
+## 🛠️ Tecnologias que usei (e estou aprendendo)
 
 ### Frontend
-- **React 19** - Framework moderno
-- **TypeScript** - Tipagem estática
-- **Tailwind CSS** - Estilização utilitária
-- **Vite** - Build tool rápido
-- **@dnd-kit** - Drag & Drop acessível
-- **Socket.IO Client** - Comunicação em tempo real
+- **React 19** - Framework que estou aprendendo (hooks são incríveis!)
+- **TypeScript** - Ainda estou me acostumando, mas ajuda muito
+- **Tailwind CSS** - CSS sem sair do HTML, muito prático
+- **Vite** - Build tool super rápido
+- **@dnd-kit** - Para o drag & drop (demorei um pouco para entender)
+- **Socket.IO Client** - Para tempo real (ainda estou aprendendo WebSockets)
 
 ### Backend
-- **Node.js** - Runtime JavaScript
-- **Express** - Framework web
-- **TypeScript** - Tipagem estática
-- **Prisma** - ORM moderno
-- **PostgreSQL** - Banco de dados relacional
-- **Socket.IO** - WebSockets
-- **JWT** - Autenticação
-- **Zod** - Validação de dados
+- **Node.js** - JavaScript no servidor
+- **Express** - Framework web (bem direto)
+- **TypeScript** - Mesmo aqui, ainda aprendendo
+- **Prisma** - ORM que facilita muito o banco
+- **PostgreSQL** - Banco de dados (SQL ainda me confunde às vezes)
+- **Socket.IO** - Servidor WebSocket
+- **JWT** - Autenticação (ainda não entendo 100%)
+- **Zod** - Validação (muito útil para não quebrar nada)
 
-## 🚀 Início Rápido
+## 🚀 Como rodar o projeto (passo a passo)
 
-### Pré-requisitos
-- Node.js 18+
-- Docker e Docker Compose
-- npm ou yarn
+### O que você precisa ter instalado
+- Node.js 18+ (eu uso a versão 20)
+- Docker e Docker Compose (para o banco de dados)
+- npm (vem com o Node.js)
 
-### Instalação e Execução
+### Como instalar e rodar
 
-#### Opção 1: Script Automatizado (Recomendado)
+#### Opção 1: Script que eu criei (mais fácil)
 ```bash
 # Clonar o repositório
 git clone <seu-repo>
 cd synctask
 
-# Executar setup completo
-npm run setup
-
-# Iniciar desenvolvimento
-npm run dev
+# Rodar o script que eu fiz (faz tudo automaticamente)
+./start.sh
 ```
 
-#### Opção 2: Script Shell
+#### Opção 2: Scripts separados (se quiser mais controle)
 ```bash
 # Tornar scripts executáveis
-chmod +x start-dev.sh stop-dev.sh
+chmod +x start.sh stop.sh
 
-# Iniciar ambiente de desenvolvimento
-./start-dev.sh
+# Iniciar tudo
+./start.sh
 
 # Para parar (em outro terminal)
-./stop-dev.sh
+./stop.sh
 ```
 
 #### Opção 3: Manual
