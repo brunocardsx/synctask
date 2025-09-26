@@ -9,7 +9,8 @@
     "dev:single": "tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+    "lint": "echo 'No linting configured for backend yet'"
   },
   "keywords": [],
   "author": "",

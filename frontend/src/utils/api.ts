@@ -16,7 +16,7 @@ export const createAuthHeaders = (): Record<string, string> => {
     };
 };
 
-export const handleApiError = (error: any): string => {
+export const handleApiError = (error: unknown): string => {
     if (error.response) {
         const { status, data } = error.response;
 
@@ -57,7 +57,7 @@ export const createApiRequest = async <T>(
 
     if (!response.ok) {
         const error = new Error(`HTTP ${response.status}`);
-        (error as any).response = {
+        (error as { response: { status: number; data: unknown } }).response = {
             status: response.status,
             data: await response.json().catch(() => ({})),
         };
@@ -72,7 +72,7 @@ export const createGetRequest = <T>(endpoint: string): Promise<T> => {
     return createApiRequest<T>(url, { method: 'GET' });
 };
 
-export const createPostRequest = <T>(endpoint: string, data: any): Promise<T> => {
+export const createPostRequest = <T>(endpoint: string, data: unknown): Promise<T> => {
     const url = createApiUrl(endpoint);
     return createApiRequest<T>(url, {
         method: 'POST',
@@ -80,7 +80,7 @@ export const createPostRequest = <T>(endpoint: string, data: any): Promise<T> =>
     });
 };
 
-export const createPutRequest = <T>(endpoint: string, data: any): Promise<T> => {
+export const createPutRequest = <T>(endpoint: string, data: unknown): Promise<T> => {
     const url = createApiUrl(endpoint);
     return createApiRequest<T>(url, {
         method: 'PUT',
@@ -88,7 +88,7 @@ export const createPutRequest = <T>(endpoint: string, data: any): Promise<T> => 
     });
 };
 
-export const createPatchRequest = <T>(endpoint: string, data: any): Promise<T> => {
+export const createPatchRequest = <T>(endpoint: string, data: unknown): Promise<T> => {
     const url = createApiUrl(endpoint);
     return createApiRequest<T>(url, {
         method: 'PATCH',
@@ -144,7 +144,7 @@ export const createUploadRequest = <T>(
                     const response = JSON.parse(xhr.responseText);
                     resolve(response);
                 } catch {
-                    resolve(xhr.responseText as any);
+                    resolve(xhr.responseText as string);
                 }
             } else {
                 reject(new Error(`HTTP ${xhr.status}`));

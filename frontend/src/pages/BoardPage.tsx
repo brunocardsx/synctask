@@ -112,7 +112,7 @@ export default function BoardPage() {
   }, [boardId]);
 
   // Função para lidar com drag over (mover entre colunas)
-  const handleDragOver = (event: any) => {
+  const handleDragOver = (event: { active: { id: string }; over: { id: string } | null }) => {
     const { active, over } = event;
 
     if (!over || !board) return;
@@ -162,7 +162,7 @@ export default function BoardPage() {
   };
 
   // Função para lidar com o fim do drag
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: { active: { id: string }; over: { id: string } | null }) => {
     const { active, over } = event;
 
     if (!over || !board) return;

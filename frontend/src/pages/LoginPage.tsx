@@ -36,7 +36,7 @@ export default function LoginPage() {
 
       navigate('/'); // Redireciona o usuário para a página principal (Dashboard)
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       // 6. Lógica de erro: exibir uma mensagem para o usuário
       console.error('Falha no login:', err);
       setError(err.response?.data?.message || 'Erro ao tentar fazer login. Tente novamente.');

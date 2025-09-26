@@ -20,7 +20,7 @@ export const createSocketOptions = () => {
     };
 };
 
-export const handleSocketError = (error: any): string => {
+export const handleSocketError = (error: unknown): string => {
     if (error.message) {
         return error.message;
     }
@@ -55,28 +55,28 @@ export const createSocketEventHandlers = () => {
     };
 };
 
-export const createSocketConnection = (io: any) => {
+export const createSocketConnection = (io: unknown) => {
     const url = createSocketUrl();
     const options = createSocketOptions();
 
     return io(url, options);
 };
 
-export const joinBoardRoom = (socket: any, boardId: string): void => {
+export const joinBoardRoom = (socket: unknown, boardId: string): void => {
     if (socket && boardId) {
         socket.emit(SOCKET_EVENTS.JOIN_BOARD, boardId);
     }
 };
 
-export const leaveBoardRoom = (socket: any, boardId: string): void => {
+export const leaveBoardRoom = (socket: unknown, boardId: string): void => {
     if (socket && boardId) {
         socket.emit(SOCKET_EVENTS.LEAVE_BOARD, boardId);
     }
 };
 
 export const setupSocketEventListeners = (
-    socket: any,
-    eventHandlers: Record<string, (data: any) => void>
+    socket: unknown,
+    eventHandlers: Record<string, (data: unknown) => void>
 ): void => {
     if (!socket) return;
 
@@ -86,7 +86,7 @@ export const setupSocketEventListeners = (
 };
 
 export const removeSocketEventListeners = (
-    socket: any,
+    socket: unknown,
     events: string[]
 ): void => {
     if (!socket) return;
@@ -96,24 +96,24 @@ export const removeSocketEventListeners = (
     });
 };
 
-export const disconnectSocket = (socket: any): void => {
+export const disconnectSocket = (socket: unknown): void => {
     if (socket) {
         socket.disconnect();
     }
 };
 
-export const isSocketConnected = (socket: any): boolean => {
+export const isSocketConnected = (socket: unknown): boolean => {
     return socket && socket.connected;
 };
 
-export const getSocketId = (socket: any): string | null => {
+export const getSocketId = (socket: unknown): string | null => {
     return socket ? socket.id : null;
 };
 
 export const createSocketReconnectionHandler = (
-    socket: any,
+    socket: unknown,
     onReconnect: () => void,
-    onReconnectError: (error: any) => void
+    onReconnectError: (error: unknown) => void
 ): void => {
     if (!socket) return;
 
@@ -122,7 +122,7 @@ export const createSocketReconnectionHandler = (
 };
 
 export const createSocketDisconnectionHandler = (
-    socket: any,
+    socket: unknown,
     onDisconnect: (reason: string) => void
 ): void => {
     if (!socket) return;

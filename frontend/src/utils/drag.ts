@@ -127,7 +127,7 @@ export const removeDragPreview = (preview: HTMLElement): void => {
     }
 };
 
-export const createDropIndicator = (_element: HTMLElement): HTMLElement => {
+export const createDropIndicator = (): HTMLElement => {
     const indicator = document.createElement('div');
     indicator.style.height = '2px';
     indicator.style.backgroundColor = '#3b82f6';
