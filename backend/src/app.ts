@@ -7,15 +7,15 @@ import columnRoutes from './api/columns/columns.route.js';
 import memberRoutes from './api/members/members.route.js';
 import { corsConfig } from './config/env.js';
 import {
-  helmetConfig,
-  mongoSanitizeConfig,
-  hppConfig,
+  authLimiter,
   compressionConfig,
-  securityHeaders,
-  requestId,
-  securityLogger,
   generalLimiter,
-  authLimiter
+  helmetConfig,
+  hppConfig,
+  mongoSanitizeConfig,
+  requestId,
+  securityHeaders,
+  securityLogger
 } from './middlewares/security.js';
 
 const app = express();

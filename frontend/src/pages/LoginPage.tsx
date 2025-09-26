@@ -22,24 +22,40 @@ export default function LoginPage() {
     setError(null);
 
     try {
+      console.log('Tentando fazer login com:', { email, password: '***' });
+      
       // 4. Chamada à API usando nosso apiClient
       const response = await apiClient.post('/auth/login', {
         email,
         password,
       });
 
-      const { token } = response.data;
+      console.log('Resposta da API:', response.data);
+      const { accessToken, refreshToken, expiresIn } = response.data;
 
-      // 5. Lógica de sucesso: salvar o token e navegar para o dashboard
-      localStorage.setItem('authToken', token); // Salva o token no armazenamento local
-      console.log('Login bem-sucedido! Token:', token);
+      // 5. Lógica de sucesso: salvar os tokens e navegar para o dashboard
+      localStorage.setItem('authToken', accessToken); // Salva o access token
+      localStorage.setItem('refreshToken', refreshToken); // Salva o refresh token
+      localStorage.setItem('tokenExpiresIn', expiresIn); // Salva o tempo de expiração
+      console.log('Login bem-sucedido! Access Token:', accessToken);
 
       navigate('/'); // Redireciona o usuário para a página principal (Dashboard)
 
-    } catch (err: unknown) {
+    } catch (err: any) {
       // 6. Lógica de erro: exibir uma mensagem para o usuário
       console.error('Falha no login:', err);
-      setError(err.response?.data?.message || 'Erro ao tentar fazer login. Tente novamente.');
+      
+      let errorMessage = 'Erro ao tentar fazer login. Tente novamente.';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (err.code === 'NETWORK_ERROR') {
+        errorMessage = 'Erro de conexão. Verifique se o servidor está rodando.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false); // Garante que o estado de carregamento termine
     }

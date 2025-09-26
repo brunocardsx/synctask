@@ -1,10 +1,6 @@
-import dotenv from 'dotenv';
 import { createServer } from 'http';
 import app from './app.js';
 import { initializeSocket } from './socket.js';
-
-// Load environment variables
-dotenv.config();
 
 const httpServer = createServer(app);
 
@@ -31,10 +27,10 @@ httpServer.listen(PORT, () => {
 });
 
 httpServer.on('error', (err) => {
-    console.error('Server error:', err);
+  console.error('Server error:', err);
 });
 
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught exception:', err);
-    process.exit(1);
+  console.error('Uncaught exception:', err);
+  process.exit(1);
 });
