@@ -244,3 +244,19 @@ export const moveCard = async (cardId: string, newColumnId: string, newOrder: nu
         return updatedCard;
     });
 };
+
+export const getCard = async (cardId: string, userId: string) => {
+    if (!isValidCardId(cardId) || !isValidUserId(userId)) {
+        return null;
+    }
+
+    return await prisma.$transaction(async (tx) => {
+        const card = await findCardWithColumnAndBoard(tx, cardId);
+
+        if (!checkCardPermission(card, userId)) {
+            return null;
+        }
+
+        return card;
+    });
+};

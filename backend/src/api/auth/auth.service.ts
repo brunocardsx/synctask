@@ -1,17 +1,10 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { registerSchema, loginSchema } from '../../schemas/authSchema.js';
+import { loginSchema, registerSchema } from '../../schemas/authSchema.js';
 
 import prisma from '../../config/prisma.js';
 
-/**
- * Lida com a lógica de negócio para registrar um novo usuário.
- * @param userData Os dados do usuário (nome, email, senha) validados.
- * @returns O token JWT gerado.
- * @throws Lança um erro se o email já estiver em uso.
- */
 export const registerNewUser = async (userData: z.infer<typeof registerSchema>) => {
     const { name, email, password } = userData;
 

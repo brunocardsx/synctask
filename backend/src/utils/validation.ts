@@ -1,5 +1,3 @@
-// Utilitários de validação para o backend SyncTask
-// Seguindo diretrizes: funções específicas ao invés de comentários
 
 import { AUTH_HEADER_PREFIX, VALIDATION_LIMITS } from '../constants/index.js';
 

@@ -109,6 +109,31 @@ export const updateCard = async (req: Request, res: Response) => {
     }
 };
 
+export const getCard = async (req: Request, res: Response) => {
+    const validationError = validateUpdateCardRequest(req);
+    if (validationError) {
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: validationError });
+    }
+
+    try {
+        const { cardId } = req.params;
+        const currentUserId = req.userId!;
+
+        const card = await cardService.getCard(cardId!, currentUserId);
+
+        if (!card) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({
+                message: 'Card not found or you do not have permission to view it.'
+            });
+        }
+
+        return res.status(HTTP_STATUS.OK).json(card);
+
+    } catch (error) {
+        return handleServerError(res, error);
+    }
+};
+
 const validateDeleteCardRequest = (req: Request): string | null => {
     const { cardId } = req.params;
     const currentUserId = req.userId;

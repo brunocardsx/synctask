@@ -1,12 +1,8 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { registerSchema, loginSchema } from '../../schemas/authSchema.js';
+import { loginSchema, registerSchema } from '../../schemas/authSchema.js';
 import * as authService from './auth.service.js';
 
-/**
- * Lida com a requisição HTTP para registro de usuário.
- * Valida os dados e chama o serviço de autenticação.
- */
 export const registerUser = async (req: Request, res: Response) => {
     try {
         const validatedData = registerSchema.parse(req.body);

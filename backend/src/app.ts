@@ -1,22 +1,27 @@
+import cors from 'cors';
 import express from 'express';
 import authRoutes from './api/auth/auth.route.js';
 import boardsRoutes from './api/boards/boards.route.js';
 import cardRoutes from './api/cards/card.route.js';
+import columnRoutes from './api/columns/columns.route.js';
 import memberRoutes from './api/members/members.route.js';
-import cors from 'cors';
 
 const app = express();
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardsRoutes);
 app.use('/api/cards', cardRoutes);
-app.use('/api', memberRoutes);
+app.use('/api/columns', columnRoutes);
+app.use('/api/members', memberRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

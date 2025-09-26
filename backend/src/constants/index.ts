@@ -1,5 +1,3 @@
-// Constantes centralizadas para o backend SyncTask
-// Seguindo diretrizes: evitar magic strings, nomes específicos
 
 export const AUTH_HEADER_PREFIX = 'Bearer ' as const;
 export const DEFAULT_JWT_SECRET = 'default-secret' as const;
@@ -17,32 +15,32 @@ export const HTTP_STATUS = {
 } as const;
 
 export const ERROR_MESSAGES = {
-    UNAUTHORIZED: 'Unauthorized: User ID not found.',
+    UNAUTHORIZED: 'Não autorizado: ID do usuário não encontrado.',
     INVALID_TOKEN: 'Token inválido ou expirado.',
     MISSING_TOKEN: 'Token de autenticação não fornecido ou mal formatado.',
-    BOARD_NOT_FOUND: 'Board not found.',
-    COLUMN_NOT_FOUND: 'Column not found.',
-    CARD_NOT_FOUND: 'Card not found.',
-    USER_NOT_FOUND: 'User not found.',
-    PERMISSION_DENIED: 'You do not have permission to perform this action.',
-    INVALID_INPUT: 'Invalid input data.',
-    SERVER_ERROR: 'Server error',
+    BOARD_NOT_FOUND: 'Quadro não encontrado.',
+    COLUMN_NOT_FOUND: 'Coluna não encontrada.',
+    CARD_NOT_FOUND: 'Cartão não encontrado.',
+    USER_NOT_FOUND: 'Usuário não encontrado.',
+    PERMISSION_DENIED: 'Você não tem permissão para realizar esta ação.',
+    INVALID_INPUT: 'Dados de entrada inválidos.',
+    SERVER_ERROR: 'Erro interno do servidor',
 } as const;
 
 export const SUCCESS_MESSAGES = {
-    BOARD_CREATED: 'Board created successfully.',
-    BOARD_UPDATED: 'Board updated successfully.',
-    BOARD_DELETED: 'Board deleted successfully.',
-    COLUMN_CREATED: 'Column created successfully.',
-    COLUMN_UPDATED: 'Column updated successfully.',
-    COLUMN_DELETED: 'Column deleted successfully.',
-    CARD_CREATED: 'Card created successfully.',
-    CARD_UPDATED: 'Card updated successfully.',
-    CARD_DELETED: 'Card deleted successfully.',
-    CARD_MOVED: 'Card moved successfully.',
-    MEMBER_ADDED: 'Member added successfully.',
-    MEMBER_UPDATED: 'Member role updated successfully.',
-    MEMBER_REMOVED: 'Member removed successfully.',
+    BOARD_CREATED: 'Quadro criado com sucesso.',
+    BOARD_UPDATED: 'Quadro atualizado com sucesso.',
+    BOARD_DELETED: 'Quadro deletado com sucesso.',
+    COLUMN_CREATED: 'Coluna criada com sucesso.',
+    COLUMN_UPDATED: 'Coluna atualizada com sucesso.',
+    COLUMN_DELETED: 'Coluna deletada com sucesso.',
+    CARD_CREATED: 'Cartão criado com sucesso.',
+    CARD_UPDATED: 'Cartão atualizado com sucesso.',
+    CARD_DELETED: 'Cartão deletado com sucesso.',
+    CARD_MOVED: 'Cartão movido com sucesso.',
+    MEMBER_ADDED: 'Membro adicionado com sucesso.',
+    MEMBER_UPDATED: 'Função do membro atualizada com sucesso.',
+    MEMBER_REMOVED: 'Membro removido com sucesso.',
 } as const;
 
 export const ROLE_TYPES = {
