@@ -5,20 +5,45 @@ import boardsRoutes from './api/boards/boards.route.js';
 import cardRoutes from './api/cards/card.route.js';
 import columnRoutes from './api/columns/columns.route.js';
 import memberRoutes from './api/members/members.route.js';
+import { corsConfig } from './config/env.js';
+import {
+  helmetConfig,
+  mongoSanitizeConfig,
+  hppConfig,
+  compressionConfig,
+  securityHeaders,
+  requestId,
+  securityLogger,
+  generalLimiter,
+  authLimiter
+} from './middlewares/security.js';
 
 const app = express();
 
-// Middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
-  credentials: true
-}));
+// Trust proxy for rate limiting and IP detection
+app.set('trust proxy', 1);
+
+// Security middlewares (order matters!)
+app.use(helmetConfig);
+app.use(securityHeaders);
+app.use(compressionConfig);
+app.use(requestId);
+app.use(securityLogger);
+
+// Rate limiting
+app.use('/api/', generalLimiter);
+app.use('/api/auth/', authLimiter);
+
+// Body parsing with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Security middlewares
+app.use(mongoSanitizeConfig);
+app.use(hppConfig);
+
+// CORS configuration
+app.use(cors(corsConfig));
 
 // Routes
 app.use('/api/auth', authRoutes);

@@ -1,6 +1,10 @@
+import dotenv from 'dotenv';
 import { createServer } from 'http';
 import app from './app.js';
 import { initializeSocket } from './socket.js';
+
+// Load environment variables
+dotenv.config();
 
 const httpServer = createServer(app);
 

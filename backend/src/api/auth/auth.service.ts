@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { loginSchema, registerSchema } from '../../schemas/authSchema.js';
-
+import { securityConfig } from '../../config/env.js';
+import { generateTokenPair } from '../../utils/jwt.js';
 import prisma from '../../config/prisma.js';
 
 export const registerNewUser = async (userData: z.infer<typeof registerSchema>) => {
@@ -15,21 +15,25 @@ export const registerNewUser = async (userData: z.infer<typeof registerSchema>) 
         throw error;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, securityConfig.bcryptRounds);
 
     const user = await prisma.user.create({
         data: {
             name,
             email,
             password: hashedPassword,
+            tokenVersion: 0,
         },
     });
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'default-secret', {
-        expiresIn: '1d',
-    });
+    const { accessToken, refreshToken } = generateTokenPair(user.id, user.tokenVersion);
 
-    return { token, userId: user.id };
+    return { 
+        accessToken, 
+        refreshToken, 
+        userId: user.id,
+        expiresIn: securityConfig.jwtExpiresIn
+    };
 };
 
 export const loginUser = async (loginData: z.infer<typeof loginSchema>) => {
@@ -50,9 +54,11 @@ export const loginUser = async (loginData: z.infer<typeof loginSchema>) => {
         throw error;
     }
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'default-secret', {
-        expiresIn: '1d',
-    });
+    const { accessToken, refreshToken } = generateTokenPair(user.id, user.tokenVersion);
 
-    return token;
+    return {
+        accessToken,
+        refreshToken,
+        expiresIn: securityConfig.jwtExpiresIn
+    };
 };
