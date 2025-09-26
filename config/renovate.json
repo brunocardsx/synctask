@@ -1,0 +1,62 @@
+{
+    "extends": [
+        "config:base",
+        "config:js-lib",
+        "config:typescript"
+    ],
+    "packageRules": [
+        {
+            "matchPackagePatterns": [
+                "^@types/"
+            ],
+            "groupName": "types"
+        },
+        {
+            "matchPackagePatterns": [
+                "^eslint"
+            ],
+            "groupName": "eslint"
+        },
+        {
+            "matchPackagePatterns": [
+                "^prettier"
+            ],
+            "groupName": "prettier"
+        },
+        {
+            "matchPackagePatterns": [
+                "^jest",
+                "^@types/jest"
+            ],
+            "groupName": "jest"
+        },
+        {
+            "matchPackagePatterns": [
+                "^@prisma"
+            ],
+            "groupName": "prisma"
+        },
+        {
+            "matchPackagePatterns": [
+                "^socket.io"
+            ],
+            "groupName": "socket.io"
+        }
+    ],
+    "schedule": [
+        "before 6am on monday"
+    ],
+    "timezone": "America/Sao_Paulo",
+    "prConcurrentLimit": 5,
+    "prHourlyLimit": 2,
+    "labels": [
+        "dependencies"
+    ],
+    "assignees": [
+        "brunocardsx"
+    ],
+    "reviewers": [
+        "brunocardsx"
+    ]
+}
+

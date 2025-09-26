@@ -1,7 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { DEFAULT_JWT_SECRET, ERROR_MESSAGES, HTTP_STATUS } from '../constants/index.js';
+import { JwtPayload } from '../types/index.js';
+import { extractTokenFromHeader, isValidAuthHeader } from '../utils/validation.js';
 
-// Estender a interface Request para incluir userId
+// Estendendo o tipo Request para incluir userId
 declare global {
   namespace Express {
     interface Request {
@@ -10,26 +13,32 @@ declare global {
   }
 }
 
-/**
-Middleware para verificar se o usuário está autenticado.
-Extrai o token do header, verifica-o e anexa o payload (incluindo userId) à requisição.
-*/
+const verifyJwtToken = (token: string): JwtPayload => {
+  const jwtSecret = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
+  return jwt.verify(token, jwtSecret) as JwtPayload;
+};
+
+const handleInvalidToken = (res: Response, message: string) => {
+  return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message });
+};
+
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Token de autenticação não fornecido ou mal formatado.' });
+
+  if (!isValidAuthHeader(authHeader)) {
+    return handleInvalidToken(res, ERROR_MESSAGES.MISSING_TOKEN);
   }
-  
-  const token = authHeader.split(' ')[1];
+
+  const token = extractTokenFromHeader(authHeader!);
   if (!token) {
-    return res.status(401).json({ message: 'Token não fornecido.' });
+    return handleInvalidToken(res, ERROR_MESSAGES.MISSING_TOKEN);
   }
-  
+
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as { userId: string };
+    const payload = verifyJwtToken(token);
     req.userId = payload.userId;
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Token inválido ou expirado.' });
+    return handleInvalidToken(res, ERROR_MESSAGES.INVALID_TOKEN);
   }
 };

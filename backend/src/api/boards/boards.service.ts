@@ -13,12 +13,27 @@ export const createBoard = async (name: string, ownerId: string) => {
         throw new Error(`User with ID ${ownerId} does not exist.`);
     }
 
-    const board = await prisma.board.create({
-        data: {
-            name,
-            ownerId: ownerId,
-        },
+    // Criar board e adicionar owner como membro ADMIN automaticamente
+    const board = await prisma.$transaction(async (tx) => {
+        const newBoard = await tx.board.create({
+            data: {
+                name,
+                ownerId: ownerId,
+            },
+        });
+
+        // Adicionar o owner como membro ADMIN
+        await tx.boardMember.create({
+            data: {
+                userId: ownerId,
+                boardId: newBoard.id,
+                role: 'ADMIN'
+            }
+        });
+
+        return newBoard;
     });
+
     return board;
 };
 

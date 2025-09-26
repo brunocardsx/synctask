@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { DndContext } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { CardModal } from '../components/CardModal';
+import { Column } from '../components/Column';
 import { useSocket } from '../context/SocketContext';
 import apiClient from '../services/api';
-import Column from '../components/Column';
-import CardModal from '../components/CardModal';
 
 interface Card {
   id: string;
@@ -50,7 +50,7 @@ export default function BoardPage() {
   useEffect(() => {
     const fetchBoard = async () => {
       if (!boardId) return;
-      
+
       try {
         const authToken = localStorage.getItem('authToken');
         if (!authToken) {
@@ -63,7 +63,7 @@ export default function BoardPage() {
             Authorization: `Bearer ${authToken}`,
           },
         });
-        
+
         // Adicionar cards de exemplo para testar drag & drop
         const boardData = response.data;
         if (boardData.columns.length > 0) {
@@ -77,14 +77,14 @@ export default function BoardPage() {
               columnId: boardData.columns[0].id
             },
             {
-              id: 'card-2', 
+              id: 'card-2',
               title: 'Configurar banco de dados',
               description: 'Setup do PostgreSQL e Prisma',
               order: 1,
               columnId: boardData.columns[0].id
             }
           ];
-          
+
           // Cards na segunda coluna
           if (boardData.columns[1]) {
             boardData.columns[1].cards = [
@@ -98,7 +98,7 @@ export default function BoardPage() {
             ];
           }
         }
-        
+
         setBoard(boardData);
       } catch (err) {
         console.error('Erro ao carregar board:', err);
@@ -114,28 +114,28 @@ export default function BoardPage() {
   // Função para lidar com drag over (mover entre colunas)
   const handleDragOver = (event: any) => {
     const { active, over } = event;
-    
+
     if (!over || !board) return;
-    
+
     const activeId = active.id as string;
     const overId = over.id as string;
-    
+
     // Encontrar a coluna de origem e destino
-    const activeColumn = board.columns.find(col => 
+    const activeColumn = board.columns.find(col =>
       col.cards.some(card => card.id === activeId)
     );
-    const overColumn = board.columns.find(col => 
+    const overColumn = board.columns.find(col =>
       col.id === overId || col.cards.some(card => card.id === overId)
     );
-    
+
     if (!activeColumn || !overColumn || activeColumn.id === overColumn.id) {
       return;
     }
-    
+
     // Mover card entre colunas
     setBoard(currentBoard => {
       if (!currentBoard) return null;
-      
+
       const newColumns = currentBoard.columns.map(column => {
         if (column.id === activeColumn.id) {
           return {
@@ -143,7 +143,7 @@ export default function BoardPage() {
             cards: column.cards.filter(card => card.id !== activeId)
           };
         }
-        
+
         if (column.id === overColumn.id) {
           const cardToMove = activeColumn.cards.find(card => card.id === activeId);
           if (cardToMove) {
@@ -153,38 +153,38 @@ export default function BoardPage() {
             };
           }
         }
-        
+
         return column;
       });
-      
+
       return { ...currentBoard, columns: newColumns };
     });
   };
-  
+
   // Função para lidar com o fim do drag
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    
+
     if (!over || !board) return;
-    
+
     const activeId = active.id as string;
     const overId = over.id as string;
-    
+
     // Encontrar a coluna que contém o card ativo
-    const activeColumn = board.columns.find(col => 
+    const activeColumn = board.columns.find(col =>
       col.cards.some(card => card.id === activeId)
     );
-    
+
     if (!activeColumn) return;
-    
+
     // Se estamos reordenando dentro da mesma coluna
     const activeCardIndex = activeColumn.cards.findIndex(card => card.id === activeId);
     const overCardIndex = activeColumn.cards.findIndex(card => card.id === overId);
-    
+
     if (activeCardIndex !== -1 && overCardIndex !== -1) {
       setBoard(currentBoard => {
         if (!currentBoard) return null;
-        
+
         const newColumns = currentBoard.columns.map(column => {
           if (column.id === activeColumn.id) {
             const newCards = arrayMove(column.cards, activeCardIndex, overCardIndex);
@@ -192,11 +192,11 @@ export default function BoardPage() {
           }
           return column;
         });
-        
+
         return { ...currentBoard, columns: newColumns };
       });
     }
-    
+
     console.log('Drag ended:', { activeId, overId });
     // TODO: Aqui você implementaria a chamada para a API para salvar a nova posição
   };
@@ -210,14 +210,14 @@ export default function BoardPage() {
   const handleCardUpdated = (updatedCard: Card) => {
     setBoard(currentBoard => {
       if (!currentBoard) return null;
-      
+
       const newColumns = currentBoard.columns.map(column => ({
         ...column,
-        cards: column.cards.map(card => 
+        cards: column.cards.map(card =>
           card.id === updatedCard.id ? updatedCard : card
         )
       }));
-      
+
       return { ...currentBoard, columns: newColumns };
     });
   };
@@ -225,12 +225,12 @@ export default function BoardPage() {
   const handleCardDeleted = (cardId: string) => {
     setBoard(currentBoard => {
       if (!currentBoard) return null;
-      
+
       const newColumns = currentBoard.columns.map(column => ({
         ...column,
         cards: column.cards.filter(card => card.id !== cardId)
       }));
-      
+
       return { ...currentBoard, columns: newColumns };
     });
   };
@@ -238,7 +238,7 @@ export default function BoardPage() {
   const handleCardAdded = (newCard: Card) => {
     setBoard(currentBoard => {
       if (!currentBoard) return null;
-      
+
       const newColumns = currentBoard.columns.map(column => {
         if (column.id === newCard.columnId) {
           return {
@@ -248,7 +248,7 @@ export default function BoardPage() {
         }
         return column;
       });
-      
+
       return { ...currentBoard, columns: newColumns };
     });
   };
@@ -260,17 +260,17 @@ export default function BoardPage() {
     if (boardId) {
       socket.emit('join_board', boardId);
     }
-    
+
     // Listener para nova coluna criada
     socket.on('column:created', (newColumn: Column) => {
       console.log('Nova coluna recebida:', newColumn);
       setBoard(currentBoard => {
         if (!currentBoard) return null;
-        
+
         // Verifica se a coluna já existe para evitar duplicação
         const columnExists = currentBoard.columns.some(col => col.id === newColumn.id);
         if (columnExists) return currentBoard;
-        
+
         return {
           ...currentBoard,
           columns: [...currentBoard.columns, { ...newColumn, cards: [] }]
@@ -304,17 +304,17 @@ export default function BoardPage() {
     <DndContext onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
       <div className="p-4">
         <h1 className="text-3xl font-bold mb-6">{board.name}</h1>
-        
+
         <div className="flex space-x-6 overflow-x-auto">
           {board.columns.map((column) => (
-            <Column 
-              key={column.id} 
-              column={column} 
+            <Column
+              key={column.id}
+              column={column}
               onCardClick={handleCardClick}
               onCardAdded={handleCardAdded}
             />
           ))}
-          
+
           {board.columns.length === 0 && (
             <div className="text-gray-500 text-center py-8">
               Nenhuma coluna criada ainda
@@ -322,7 +322,7 @@ export default function BoardPage() {
           )}
         </div>
       </div>
-      
+
       <CardModal
         card={selectedCard}
         isOpen={isModalOpen}

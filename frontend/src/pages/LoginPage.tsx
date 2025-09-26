@@ -1,7 +1,8 @@
-import { useState, FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Input from '../components/Input';
 import Button from '../components/Button';
+import Input from '../components/Input';
 import apiClient from '../services/api'; // 1. Importamos nosso cliente API
 
 export default function LoginPage() {
@@ -26,7 +27,7 @@ export default function LoginPage() {
         email,
         password,
       });
-      
+
       const { token } = response.data;
 
       // 5. Lógica de sucesso: salvar o token e navegar para o dashboard
@@ -50,7 +51,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold mb-6 text-center">Login no SyncTask</h1>
         {/* Exibe a mensagem de erro, se houver */}
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        
+
         {/* 7. Conectamos o estado e as funções ao formulário */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input

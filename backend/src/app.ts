@@ -2,6 +2,7 @@ import express from 'express';
 import authRoutes from './api/auth/auth.route.js';
 import boardsRoutes from './api/boards/boards.route.js';
 import cardRoutes from './api/cards/card.route.js';
+import memberRoutes from './api/members/members.route.js';
 import cors from 'cors';
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(cors());
 app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardsRoutes);
 app.use('/api/cards', cardRoutes);
+app.use('/api', memberRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

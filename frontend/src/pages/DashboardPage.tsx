@@ -2,22 +2,28 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../services/api';
 
+// Interface para os boards - ainda estou aprendendo TypeScript
 interface Board {
   id: string;
   name: string;
 }
 
 export default function DashboardPage() {
+  // Estados para gerenciar a página
   const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estados para o modal de criar board
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBoardName, setNewBoardName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
+  // Buscar os boards quando a página carrega
   useEffect(() => {
     const fetchBoards = async () => {
       try {
+        // Pegando o token do localStorage (onde salvei no login)
         const authToken = localStorage.getItem('authToken');
         if (!authToken) {
           setError('No authentication token found.');
@@ -25,6 +31,7 @@ export default function DashboardPage() {
           return;
         }
 
+        // Fazendo a requisição para buscar os boards
         const response = await apiClient.get('/boards', {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -32,23 +39,27 @@ export default function DashboardPage() {
         });
         setBoards(response.data);
       } catch (err) {
+        // Se der erro, mostro uma mensagem amigável
         console.error('Failed to fetch boards:', err);
         setError('Failed to load boards. Please try again later.');
       } finally {
-        setLoading(false);
+        setLoading(false); // Para de mostrar o loading
       }
     };
 
     fetchBoards();
   }, []);
 
+  // Função para criar um novo board
   const handleCreateBoard = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBoardName.trim()) return;
+    if (!newBoardName.trim()) return; // Se não tem nome, não faz nada
 
-    setIsCreating(true);
+    setIsCreating(true); // Mostrando que está criando
     try {
       const authToken = localStorage.getItem('authToken');
+      
+      // Enviando a requisição para criar o board
       const response = await apiClient.post('/boards', {
         name: newBoardName.trim()
       }, {
@@ -57,14 +68,16 @@ export default function DashboardPage() {
         },
       });
 
+      // Adicionando o novo board na lista (sem precisar recarregar a página)
       setBoards(prev => [...prev, response.data]);
-      setNewBoardName('');
-      setShowCreateModal(false);
+      setNewBoardName(''); // Limpando o campo
+      setShowCreateModal(false); // Fechando o modal
     } catch (error) {
+      // Se der erro, mostro um alerta simples
       console.error('Erro ao criar board:', error);
       alert('Erro ao criar board. Tente novamente.');
     } finally {
-      setIsCreating(false);
+      setIsCreating(false); // Para de mostrar o loading
     }
   };
 
