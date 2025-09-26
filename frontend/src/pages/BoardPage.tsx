@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CardModal } from '../components/CardModal';
 import { Column } from '../components/Column';
-import { useSocket } from '../context/SocketContext';
+import { useSocket } from '../hooks/useSocket';
 import apiClient from '../services/api';
 
 interface Card {
@@ -38,6 +38,14 @@ interface Board {
 }
 
 export default function BoardPage() {
+  // Verificar autenticação antes de renderizar
+  const authToken = localStorage.getItem('authToken');
+  if (!authToken) {
+    console.log('BoardPage: No auth token, redirecting to login');
+    window.location.href = '/login';
+    return null;
+  }
+
   const { boardId } = useParams<{ boardId: string }>();
   const socket = useSocket();
   const [board, setBoard] = useState<Board | null>(null);

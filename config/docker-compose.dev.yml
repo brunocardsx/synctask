@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  # PostgreSQL Database for development
+  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: synctask-postgres-dev
@@ -14,11 +12,10 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - synctask-dev-network
+      - synctask-network
 
-  # Redis for development
+  # Redis for caching and sessions
   redis:
     image: redis:7-alpine
     container_name: synctask-redis-dev
@@ -28,19 +25,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - synctask-dev-network
-
-  # Database admin interface
-  adminer:
-    image: adminer:4.8.1
-    container_name: synctask-adminer
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    networks:
-      - synctask-dev-network
+      - synctask-network
 
 volumes:
   postgres_data:
@@ -48,5 +33,5 @@ volumes:
 
 
 networks:
-  synctask-dev-network:
+  synctask-network:
     driver: bridge

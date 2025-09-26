@@ -9,11 +9,21 @@ interface Board {
 }
 
 export default function DashboardPage() {
+  console.log('DashboardPage rendered - this should not happen without auth!');
+
+  // Verificar autenticação antes de renderizar
+  const authToken = localStorage.getItem('authToken');
+  if (!authToken) {
+    console.log('DashboardPage: No auth token, redirecting to login');
+    window.location.href = '/login';
+    return null;
+  }
+
   // Estados para gerenciar a página
   const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Estados para o modal de criar board
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBoardName, setNewBoardName] = useState('');
@@ -58,7 +68,7 @@ export default function DashboardPage() {
     setIsCreating(true); // Mostrando que está criando
     try {
       const authToken = localStorage.getItem('authToken');
-      
+
       // Enviando a requisição para criar o board
       const response = await apiClient.post('/boards', {
         name: newBoardName.trim()
@@ -100,7 +110,7 @@ export default function DashboardPage() {
           + Create Board
         </button>
       </div>
-      
+
       {boards.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-600 mb-4">No boards found. Create one to get started!</p>
@@ -128,7 +138,7 @@ export default function DashboardPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h2 className="text-xl font-bold mb-4">Create New Board</h2>
-            
+
             <form onSubmit={handleCreateBoard}>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -144,7 +154,7 @@ export default function DashboardPage() {
                   disabled={isCreating}
                 />
               </div>
-              
+
               <div className="flex justify-end gap-3">
                 <button
                   type="button"

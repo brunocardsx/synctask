@@ -1,9 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
-import { router } from './router';
 import { SocketProvider } from './context/SocketContext';
 import './index.css';
+import { router } from './router';
+
+console.log('Main.tsx loaded');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
