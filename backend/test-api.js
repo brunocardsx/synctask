@@ -1,5 +1,5 @@
 // Teste simples das APIs
-import app from './src/app.js';
+import app from './dist/app.js';
 
 const server = app.listen(3001, async () => {
     console.log('✅ Servidor rodando na porta 3001');

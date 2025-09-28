@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Input from '../components/Input';
 import Button from '../components/Button';
+import Input from '../components/Input';
 import apiClient from '../services/api';
 
 const RegisterPage: React.FC = () => {
@@ -30,6 +30,7 @@ const RegisterPage: React.FC = () => {
           <div className="mb-4">
             <Input
               type="text"
+              label="Name"
               placeholder="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -39,6 +40,7 @@ const RegisterPage: React.FC = () => {
           <div className="mb-4">
             <Input
               type="email"
+              label="Email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -48,6 +50,7 @@ const RegisterPage: React.FC = () => {
           <div className="mb-6">
             <Input
               type="password"
+              label="Password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

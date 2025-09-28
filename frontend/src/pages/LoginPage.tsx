@@ -1,7 +1,8 @@
-import { useState, FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Input from '../components/Input';
 import Button from '../components/Button';
+import Input from '../components/Input';
 import apiClient from '../services/api'; // 1. Importamos nosso cliente API
 
 export default function LoginPage() {
@@ -21,24 +22,40 @@ export default function LoginPage() {
     setError(null);
 
     try {
+      console.log('Tentando fazer login com:', { email, password: '***' });
+      
       // 4. Chamada à API usando nosso apiClient
       const response = await apiClient.post('/auth/login', {
         email,
         password,
       });
-      
-      const { token } = response.data;
 
-      // 5. Lógica de sucesso: salvar o token e navegar para o dashboard
-      localStorage.setItem('authToken', token); // Salva o token no armazenamento local
-      console.log('Login bem-sucedido! Token:', token);
+      console.log('Resposta da API:', response.data);
+      const { accessToken, refreshToken, expiresIn } = response.data;
+
+      // 5. Lógica de sucesso: salvar os tokens e navegar para o dashboard
+      localStorage.setItem('authToken', accessToken); // Salva o access token
+      localStorage.setItem('refreshToken', refreshToken); // Salva o refresh token
+      localStorage.setItem('tokenExpiresIn', expiresIn); // Salva o tempo de expiração
+      console.log('Login bem-sucedido! Access Token:', accessToken);
 
       navigate('/'); // Redireciona o usuário para a página principal (Dashboard)
 
     } catch (err: any) {
       // 6. Lógica de erro: exibir uma mensagem para o usuário
       console.error('Falha no login:', err);
-      setError(err.response?.data?.message || 'Erro ao tentar fazer login. Tente novamente.');
+      
+      let errorMessage = 'Erro ao tentar fazer login. Tente novamente.';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (err.code === 'NETWORK_ERROR') {
+        errorMessage = 'Erro de conexão. Verifique se o servidor está rodando.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false); // Garante que o estado de carregamento termine
     }
@@ -50,7 +67,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold mb-6 text-center">Login no SyncTask</h1>
         {/* Exibe a mensagem de erro, se houver */}
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        
+
         {/* 7. Conectamos o estado e as funções ao formulário */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input

@@ -1,14 +1,36 @@
+import { createServer } from 'http';
 import app from './app.js';
+import { initializeSocket } from './socket.js';
 
-const server = app.listen(3001, () => {
-    console.log('Server is running on http://localhost:3001');
+const httpServer = createServer(app);
+
+// Inicialize Socket.IO 
+const io = initializeSocket(httpServer);
+
+io.on('connection', (socket) => {
+  console.log(`✨ Cliente conectado: ${socket.id}`);
+
+  socket.on('join_board', (boardId) => {
+    socket.join(boardId);
+    console.log(`🔌 Cliente ${socket.id} entrou na sala do board: ${boardId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`🔥 Cliente desconectado: ${socket.id}`);
+  });
 });
 
-server.on('error', (err) => {
-    console.error('Server error:', err);
+const PORT = process.env.PORT || 3001;
+
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+});
+
+httpServer.on('error', (err) => {
+  console.error('Server error:', err);
 });
 
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught exception:', err);
-    process.exit(1);
+  console.error('Uncaught exception:', err);
+  process.exit(1);
 });

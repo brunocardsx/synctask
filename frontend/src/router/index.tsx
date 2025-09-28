@@ -1,25 +1,15 @@
 import { createBrowserRouter } from 'react-router-dom';
 import App from '../App';
+import BoardPage from '../pages/BoardPage';
+import DashboardPage from '../pages/DashboardPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
-import DashboardPage from '../pages/DashboardPage';
-import ProtectedRoute from './ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />, // O elemento principal (nosso layout)
+    element: <App />,
     children: [
-      // As rotas filhas que serão renderizadas dentro do <Outlet>
-      {
-        element: <ProtectedRoute />,
-        children: [
-          {
-            path: '/',
-            element: <DashboardPage />,
-          },
-        ],
-      },
       {
         path: '/login',
         element: <LoginPage />,
@@ -28,7 +18,16 @@ export const router = createBrowserRouter([
         path: '/register',
         element: <RegisterPage />,
       },
-      // Futuramente: { path: '/board/:boardId', element: <BoardPage /> }
+      {
+        index: true,
+        element: <DashboardPage />,
+      },
+      {
+        path: 'board/:boardId',
+        element: <BoardPage />,
+      },
     ],
   },
 ]);
+
+console.log('Router created:', router);

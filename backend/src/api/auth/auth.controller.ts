@@ -1,19 +1,20 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { registerSchema, loginSchema } from '../../schemas/authSchema.js';
+import { loginSchema, registerSchema } from '../../schemas/authSchema.js';
 import * as authService from './auth.service.js';
 
-/**
- * Lida com a requisição HTTP para registro de usuário.
- * Valida os dados e chama o serviço de autenticação.
- */
 export const registerUser = async (req: Request, res: Response) => {
     try {
         const validatedData = registerSchema.parse(req.body);
 
-        const { token, userId } = await authService.registerNewUser(validatedData);
+        const { accessToken, refreshToken, userId, expiresIn } = await authService.registerNewUser(validatedData);
 
-        return res.status(201).json({ token, userId });
+        return res.status(201).json({ 
+            accessToken, 
+            refreshToken, 
+            userId,
+            expiresIn
+        });
 
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -44,9 +45,13 @@ export const registerUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
     try {
         const validatedData = loginSchema.parse(req.body);
-        const token = await authService.loginUser(validatedData);
+        const { accessToken, refreshToken, expiresIn } = await authService.loginUser(validatedData);
 
-        return res.status(200).json({ token });
+        return res.status(200).json({ 
+            accessToken, 
+            refreshToken,
+            expiresIn
+        });
     } catch (error) {
         if (error instanceof z.ZodError) {
             const errors: { [key: string]: string[] } = {};

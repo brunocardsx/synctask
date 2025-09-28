@@ -1,22 +1,48 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { NextFunction, Request, Response } from 'express';
+import { ERROR_MESSAGES, HTTP_STATUS } from '../constants/index.js';
+import { verifyAccessToken, extractTokenFromHeader } from '../utils/jwt.js';
+import { isValidAuthHeader } from '../utils/validation.js';
 
-/**
-Middleware para verificar se o usuário está autenticado.
-Extrai o token do header, verifica-o e anexa o payload (incluindo userId) à requisição.
-*/
+// Estendendo o tipo Request para incluir userId
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+      requestId?: string;
+    }
+  }
+}
+
+const handleInvalidToken = (res: Response, message: string, requestId?: string) => {
+  console.warn(`Authentication failed [${requestId}]: ${message}`);
+  return res.status(HTTP_STATUS.UNAUTHORIZED).json({ 
+    message,
+    requestId 
+  });
+};
+
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-const authHeader = req.headers.authorization;
-if (!authHeader || !authHeader.startsWith('Bearer ')) {
-return res.status(401).json({ message: 'Token de autenticação não fornecido ou mal formatado.' });
-}
-const token = authHeader.split(' ')[1];
-try {
-const payload = jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as { userId: string };
-req.userId = payload.userId;
+  const authHeader = req.headers.authorization;
+  const requestId = req.requestId;
 
-next();
-} catch (error) {
-return res.status(401).json({ message: 'Token inválido ou expirado.' });
-}
+  if (!isValidAuthHeader(authHeader)) {
+    return handleInvalidToken(res, ERROR_MESSAGES.MISSING_TOKEN, requestId);
+  }
+
+  const token = extractTokenFromHeader(authHeader!);
+  if (!token) {
+    return handleInvalidToken(res, ERROR_MESSAGES.MISSING_TOKEN, requestId);
+  }
+
+  try {
+    const payload = verifyAccessToken(token);
+    req.userId = payload.userId;
+    
+    // Log successful authentication
+    console.log(`User authenticated [${requestId}]: ${payload.userId}`);
+    next();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.INVALID_TOKEN;
+    return handleInvalidToken(res, errorMessage, requestId);
+  }
 };

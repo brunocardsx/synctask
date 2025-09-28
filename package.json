@@ -4,12 +4,29 @@
   "description": "Root package for SyncTask application",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+    "dev": "npm run build:backend && npm run start:db && concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:backend": "npm run build --prefix backend",
+    "start:db": "docker-compose -f config/docker-compose.dev.yml up -d",
+    "stop:db": "docker-compose -f config/docker-compose.dev.yml down",
+    "setup": "npm install && npm run build:backend && npm run start:db",
+    "clean": "npm run stop:db && rm -rf backend/dist backend/node_modules frontend/node_modules node_modules",
+    "lint": "npm run lint --prefix backend && npm run lint --prefix frontend",
+    "lint:fix": "npm run lint:fix --prefix backend && npm run lint:fix --prefix frontend",
+    "type-check": "npm run type-check --prefix backend && npm run type-check --prefix frontend",
+    "test": "npm run test --prefix backend && npm run test --prefix frontend",
+    "test:watch": "npm run test:watch --prefix backend && npm run test:watch --prefix frontend",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "prettier": "^3.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.0.0"
   }
 }

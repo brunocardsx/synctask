@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { createBoardSchema, updateBoardSchema } from '../../schemas/boardSchema';
-import * as boardService from './boards.service';
+import { createBoardSchema, updateBoardSchema } from '../../schemas/boardSchema.js';
+import * as boardService from './boards.service.js';
 
 export const createBoard = async (req: Request, res: Response) => {
     try {
@@ -66,6 +66,10 @@ export const getBoardById = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Unauthorized: User ID not found.' });
         }
 
+        if (!id) {
+            return res.status(400).json({ message: 'Board ID is required.' });
+        }
+
         const board = await boardService.getBoardByIdAndOwnerId(id, ownerId);
 
         if (!board) {
@@ -88,6 +92,10 @@ export const updateBoard = async (req: Request, res: Response) => {
 
         if (!ownerId) {
             return res.status(401).json({ message: 'Unauthorized: User ID not found.' });
+        }
+
+        if (!id) {
+            return res.status(400).json({ message: 'Board ID is required.' });
         }
 
         const updatedBoard = await boardService.updateBoard(id, name, ownerId);
@@ -114,6 +122,32 @@ export const updateBoard = async (req: Request, res: Response) => {
             });
         }
 
+        console.error(error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const deleteBoard = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const ownerId = req.userId;
+
+        if (!ownerId) {
+            return res.status(401).json({ message: 'Unauthorized: User ID not found.' });
+        }
+
+        if (!id) {
+            return res.status(400).json({ message: 'Board ID is required.' });
+        }
+
+        const result = await boardService.deleteBoard(id, ownerId);
+
+        if (!result) {
+            return res.status(404).json({ message: 'Board not found.' });
+        }
+
+        return res.status(200).json({ message: 'Board deleted successfully.' });
+    } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Server error' });
     }

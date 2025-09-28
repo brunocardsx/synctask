@@ -1,12 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
-import { router } from './router'; // Importa nosso roteador
+import { SocketProvider } from './context/SocketContext';
 import './index.css';
+import { router } from './router';
+
+console.log('Main.tsx loaded');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {/* Provê as rotas para toda a aplicação */}
-    <RouterProvider router={router} />
+    <SocketProvider>
+      <RouterProvider router={router} />
+    </SocketProvider>
   </React.StrictMode>
 );

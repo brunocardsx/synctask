@@ -35,19 +35,21 @@ enum ActivityType {
 // Modelo provisório do banco de dados
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  password     String
+  tokenVersion Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relacionamentos
-  memberships    BoardMember[] // quadros dos quais o usuário é membro
-  assignedCards  CardAssignee[] // cartões pelo qual o usuário é responsável
-  comments       Comment[] // comentários feitos pelo usuário
-  activities     Activity[] // atividades realizada pelos usuários
-  ownedBoards    Board[] // Added this line for the inverse relation
+  memberships     BoardMember[]     // quadros dos quais o usuário é membro
+  assignedCards   CardAssignee[]    // cartões pelo qual o usuário é responsável
+  comments        Comment[]         // comentários feitos pelo usuário
+  activities      Activity[]        // atividades realizada pelos usuários
+  ownedBoards     Board[]          // Added this line for the inverse relation
+  passwordResets  PasswordReset[]   // tokens de reset de senha
 }
 
 model Board {
@@ -146,4 +148,19 @@ model Activity {
 
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Password reset tokens
+model PasswordReset {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
 }
