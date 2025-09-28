@@ -4,7 +4,7 @@ import { initializeSocket } from './socket.js';
 
 const httpServer = createServer(app);
 
-// Inicialize o Socket.IO usando nosso módulo
+// Inicialize Socket.IO 
 const io = initializeSocket(httpServer);
 
 io.on('connection', (socket) => {
