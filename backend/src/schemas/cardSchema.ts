@@ -6,7 +6,7 @@ export const createCardSchema = z.object({
 });
 
 export const updateCardSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
+  title: z.string().min(1, 'Title is required').max(100, 'Title too long').optional(),
   description: z.string().max(500, 'Description too long').optional(),
 });
 

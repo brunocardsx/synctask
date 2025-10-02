@@ -12,6 +12,10 @@ router.put('/:id', isAuthenticated, boardsController.updateBoard);
 router.delete('/:id', isAuthenticated, boardsController.deleteBoard);
 
 // Nested route for creating a column within a board
-router.post('/:boardId/columns', isAuthenticated, columnsController.createColumn);
+router.post(
+  '/:boardId/columns',
+  isAuthenticated,
+  columnsController.createColumn
+);
 
 export default router;
