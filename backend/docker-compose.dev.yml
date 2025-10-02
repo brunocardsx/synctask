@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: synctask-postgres-dev
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: synctask
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: synctask_db
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U synctask -d synctask_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - synctask-dev-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: synctask-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - synctask-dev-network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  synctask-dev-network:
+    driver: bridge
