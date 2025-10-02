@@ -11,6 +11,10 @@ router.get('/:id', isAuthenticated, boardsController.getBoardById);
 router.put('/:id', isAuthenticated, boardsController.updateBoard);
 
 // Nested route for creating a column within a board
-router.post('/:boardId/columns', isAuthenticated, columnsController.createColumn);
+router.post(
+  '/:boardId/columns',
+  isAuthenticated,
+  columnsController.createColumn
+);
 
 export default router;
