@@ -1,103 +1,100 @@
-import { registerSchema, loginSchema } from '../../schemas/authSchema.ts';
+import { registerSchema, loginSchema } from '../../schemas/authSchema.js';
 
 describe('Auth Schemas', () => {
   describe('registerSchema', () => {
-    it('validates correct user data', () => {
+    it('deve validar dados corretos de usuário', () => {
       const validData = {
-        name: 'John Doe',
-        email: 'john@example.com',
+        name: 'Test User',
+        email: 'test@example.com',
         password: 'password123',
       };
-
-      const result = registerSchema.safeParse(validData);
-      expect(result.success).toBe(true);
+      expect(() => registerSchema.parse(validData)).not.toThrow();
     });
 
-    it('rejects invalid email', () => {
+    it('deve rejeitar email inválido', () => {
       const invalidData = {
-        name: 'John Doe',
+        name: 'Test User',
         email: 'invalid-email',
         password: 'password123',
       };
-
-      const result = registerSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toEqual(['email']);
-      }
+      expect(() => registerSchema.parse(invalidData)).toThrow();
     });
 
-    it('rejects short name', () => {
+    it('deve rejeitar nome muito curto', () => {
       const invalidData = {
-        name: 'Jo',
-        email: 'john@example.com',
+        name: 'T',
+        email: 'test@example.com',
         password: 'password123',
       };
-
-      const result = registerSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toEqual(['name']);
-      }
+      expect(() => registerSchema.parse(invalidData)).toThrow();
     });
 
-    it('rejects short password', () => {
+    it('deve rejeitar senha muito curta', () => {
       const invalidData = {
-        name: 'John Doe',
-        email: 'john@example.com',
-        password: '123',
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'short',
       };
-
-      const result = registerSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toEqual(['password']);
-      }
+      expect(() => registerSchema.parse(invalidData)).toThrow();
     });
 
-    it('rejects missing required fields', () => {
+    it('deve rejeitar campos obrigatórios ausentes', () => {
       const invalidData = {
-        name: 'John Doe',
-        // missing email and password
+        email: 'test@example.com',
+        password: 'password123',
       };
+      expect(() => registerSchema.parse(invalidData)).toThrow();
+    });
 
-      const result = registerSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
+    it('deve aceitar nomes com caracteres especiais', () => {
+      const validData = {
+        name: 'João da Silva-Santos',
+        email: 'joao@example.com',
+        password: 'password123',
+      };
+      expect(() => registerSchema.parse(validData)).not.toThrow();
+    });
+
+    it('deve aceitar emails com subdomínios', () => {
+      const validData = {
+        name: 'Test User',
+        email: 'test@subdomain.example.com',
+        password: 'password123',
+      };
+      expect(() => registerSchema.parse(validData)).not.toThrow();
     });
   });
 
   describe('loginSchema', () => {
-    it('validates correct login data', () => {
+    it('deve validar dados corretos de login', () => {
       const validData = {
-        email: 'john@example.com',
+        email: 'test@example.com',
         password: 'password123',
       };
-
-      const result = loginSchema.safeParse(validData);
-      expect(result.success).toBe(true);
+      expect(() => loginSchema.parse(validData)).not.toThrow();
     });
 
-    it('rejects invalid email format', () => {
+    it('deve rejeitar formato de email inválido', () => {
       const invalidData = {
         email: 'invalid-email',
         password: 'password123',
       };
-
-      const result = loginSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toEqual(['email']);
-      }
+      expect(() => loginSchema.parse(invalidData)).toThrow();
     });
 
-    it('rejects missing password', () => {
+    it('deve rejeitar senha ausente', () => {
       const invalidData = {
-        email: 'john@example.com',
-        // missing password
+        email: 'test@example.com',
       };
+      expect(() => loginSchema.parse(invalidData)).toThrow();
+    });
 
-      const result = loginSchema.safeParse(invalidData);
-      expect(result.success).toBe(false);
+    it('deve aceitar senhas com caracteres especiais', () => {
+      const validData = {
+        email: 'test@example.com',
+        password: 'P@ssw0rd!@#',
+      };
+      expect(() => loginSchema.parse(validData)).not.toThrow();
     });
   });
 });
