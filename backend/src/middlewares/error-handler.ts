@@ -16,7 +16,7 @@ const createError = (message: string, statusCode: number = 500): ApiError => {
 
 const formatZodError = (error: ZodError) => {
   const errors: Record<string, string[]> = {};
-  
+
   error.issues.forEach(issue => {
     const path = issue.path.join('.');
     if (!errors[path]) {
@@ -28,13 +28,18 @@ const formatZodError = (error: ZodError) => {
   return errors;
 };
 
-const sendErrorResponse = (res: Response, statusCode: number, message: string, errors?: Record<string, string[]>) => {
+const sendErrorResponse = (
+  res: Response,
+  statusCode: number,
+  message: string,
+  errors?: Record<string, string[]>
+) => {
   const response: any = { message };
-  
+
   if (errors) {
     response.errors = errors;
   }
-  
+
   if (process.env.NODE_ENV === 'development') {
     response.stack = new Error().stack;
   }
@@ -88,9 +93,10 @@ export const errorHandler = (
   }
 
   // Default server error
-  const message = process.env.NODE_ENV === 'production' 
-    ? 'Internal server error' 
-    : error.message;
+  const message =
+    process.env.NODE_ENV === 'production'
+      ? 'Internal server error'
+      : error.message;
 
   sendErrorResponse(res, 500, message);
 };

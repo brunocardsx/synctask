@@ -24,7 +24,7 @@ const shouldLog = (level: LogLevel): boolean => {
 
 const formatLogEntry = (entry: LogEntry): string => {
   const base = `${entry.timestamp} [${entry.level.toUpperCase()}] ${entry.message}`;
-  
+
   if (entry.context || entry.userId || entry.requestId) {
     const metadata = {
       ...entry.context,
@@ -33,7 +33,7 @@ const formatLogEntry = (entry: LogEntry): string => {
     };
     return `${base} ${JSON.stringify(metadata)}`;
   }
-  
+
   return base;
 };
 
@@ -49,7 +49,7 @@ const createLogger = (level: LogLevel) => {
     };
 
     const formatted = formatLogEntry(entry);
-    
+
     if (level === 'error') {
       console.error(formatted);
     } else if (level === 'warn') {
@@ -70,7 +70,7 @@ export const logger = {
 export const createRequestLogger = (req: any, res: any, next: any) => {
   const requestId = Math.random().toString(36).substr(2, 9);
   req.requestId = requestId;
-  
+
   logger.info('Request started', {
     method: req.method,
     url: req.url,
@@ -80,14 +80,14 @@ export const createRequestLogger = (req: any, res: any, next: any) => {
   });
 
   const originalSend = res.send;
-  res.send = function(data: any) {
+  res.send = function (data: any) {
     logger.info('Request completed', {
       statusCode: res.statusCode,
       method: req.method,
       url: req.url,
       requestId,
     });
-    
+
     return originalSend.call(this, data);
   };
 
