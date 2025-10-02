@@ -7,10 +7,10 @@ const httpServer = createServer(app);
 // Inicialize o Socket.IO usando nosso módulo
 const io = initializeSocket(httpServer);
 
-io.on('connection', (socket) => {
+io.on('connection', socket => {
   console.log(`✨ Cliente conectado: ${socket.id}`);
 
-  socket.on('join_board', (boardId) => {
+  socket.on('join_board', boardId => {
     socket.join(boardId);
     console.log(`🔌 Cliente ${socket.id} entrou na sala do board: ${boardId}`);
   });
@@ -26,11 +26,11 @@ httpServer.listen(PORT, () => {
   console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
 });
 
-httpServer.on('error', (err) => {
-    console.error('Server error:', err);
+httpServer.on('error', err => {
+  console.error('Server error:', err);
 });
 
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught exception:', err);
-    process.exit(1);
+process.on('uncaughtException', err => {
+  console.error('Uncaught exception:', err);
+  process.exit(1);
 });

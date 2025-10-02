@@ -29,7 +29,10 @@ app.use((req, res, next) => {
   const clientData = requestCounts.get(clientId);
 
   if (!clientData || now > clientData.resetTime) {
-    requestCounts.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    requestCounts.set(clientId, {
+      count: 1,
+      resetTime: now + RATE_LIMIT_WINDOW,
+    });
     return next();
   }
 
@@ -50,7 +53,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 const corsOptions = {
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 
@@ -61,8 +64,8 @@ app.use('/api/cards', cardRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),

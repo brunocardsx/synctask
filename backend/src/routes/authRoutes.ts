@@ -8,7 +8,7 @@ const router = Router();
  * @access  Public
  */
 router.post('/register', (req, res) => {
-    res.status(201).json({ token: 'a-valid-jwt-token-for-test' });
+  res.status(201).json({ token: 'a-valid-jwt-token-for-test' });
 });
 
 export default router;
