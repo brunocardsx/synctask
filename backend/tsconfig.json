@@ -19,6 +19,8 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "tests", "src/__tests__", "playwright.config.ts"],
   "ts-node": {
     "esm": true
   }

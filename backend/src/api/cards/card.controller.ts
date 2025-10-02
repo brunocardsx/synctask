@@ -75,7 +75,7 @@ export const updateCard = async (req: Request, res: Response) => {
 
     const updatedCard = await cardService.updateCard(
       cardId,
-      title,
+      title || '',
       description || '',
       userId
     );
