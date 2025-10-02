@@ -1,28 +1,23 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { registerSchema, loginSchema } from '../../schemas/authSchema.js';
-
+import { createError } from '../../middlewares/error-handler.js';
+import { logger } from '../../utils/logger.js';
 import prisma from '../../config/prisma.js';
 
-/**
- * Lida com a lógica de negócio para registrar um novo usuário.
- * @param userData Os dados do usuário (nome, email, senha) validados.
- * @returns O token JWT gerado.
- * @throws Lança um erro se o email já estiver em uso.
- */
+const BCRYPT_ROUNDS = 12;
+const JWT_EXPIRES_IN = '7d';
+
 export const registerNewUser = async (userData: z.infer<typeof registerSchema>) => {
     const { name, email, password } = userData;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-        const error = new Error('Este email já está em uso.') as any;
-        error.statusCode = 409;
-        throw error;
+        throw createError('Este email já está em uso', 409);
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const user = await prisma.user.create({
         data: {
@@ -32,8 +27,14 @@ export const registerNewUser = async (userData: z.infer<typeof registerSchema>) 
         },
     });
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'default-secret', {
-        expiresIn: '1d',
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+        logger.error('JWT_SECRET not configured');
+        throw createError('Server configuration error', 500);
+    }
+
+    const token = jwt.sign({ userId: user.id }, jwtSecret, {
+        expiresIn: JWT_EXPIRES_IN,
     });
 
     return { token, userId: user.id };
@@ -43,22 +44,23 @@ export const loginUser = async (loginData: z.infer<typeof loginSchema>) => {
     const { email, password } = loginData;
 
     const user = await prisma.user.findUnique({ where: { email } });
-
     if (!user) {
-        const error = new Error('Credenciais inválidas.') as any;
-        error.statusCode = 401;
-        throw error;
+        throw createError('Credenciais inválidas', 401);
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-        const error = new Error('Credenciais inválidas.') as any;
-        error.statusCode = 401; // 401 Unauthorized
-        throw error;
+        throw createError('Credenciais inválidas', 401);
     }
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'default-secret', {
-        expiresIn: '1d',
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+        logger.error('JWT_SECRET not configured');
+        throw createError('Server configuration error', 500);
+    }
+
+    const token = jwt.sign({ userId: user.id }, jwtSecret, {
+        expiresIn: JWT_EXPIRES_IN,
     });
 
     return token;
