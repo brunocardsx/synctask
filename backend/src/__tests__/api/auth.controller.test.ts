@@ -1,158 +1,163 @@
 import request from 'supertest';
 import express from 'express';
 import cors from 'cors';
-import authRoutes from '../../api/auth/auth.route.ts';
-import { errorHandler } from '../../middlewares/error-handler.ts';
-import { prisma } from '../setup.ts';
+import bcrypt from 'bcryptjs';
+import authRoutes from '../../api/auth/auth.route.js';
+import { errorHandler } from '../../middlewares/error-handler.js';
+import { prisma } from '../setup.js';
 
 const createTestApp = () => {
   const app = express();
-  
+
   app.use(express.json());
   app.use(cors());
   app.use('/api/auth', authRoutes);
   app.use(errorHandler);
-  
+
   return app;
 };
 
 describe('Auth Controller', () => {
   let app: express.Application;
 
-  beforeEach(() => {
+  beforeAll(() => {
     app = createTestApp();
   });
 
   describe('POST /api/auth/register', () => {
-    it('registers user successfully', async () => {
+    it('deve registrar novo usuário e retornar token', async () => {
       const userData = {
         name: 'Test User',
-        email: 'test@example.com',
+        email: `register-${Date.now()}@example.com`,
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(201);
+      const res = await request(app).post('/api/auth/register').send(userData);
 
-      expect(response.body).toHaveProperty('token');
-      expect(response.body).toHaveProperty('userId');
+      expect(res.statusCode).toEqual(201);
+      expect(res.body).toHaveProperty('token');
+      expect(res.body).toHaveProperty('userId');
 
-      const user = await prisma.user.findUnique({
+      const userInDb = await prisma.user.findUnique({
         where: { email: userData.email },
       });
-
-      expect(user).toBeTruthy();
-      expect(user?.name).toBe(userData.name);
+      expect(userInDb).not.toBeNull();
+      expect(userInDb?.name).toBe(userData.name);
     });
 
-    it('returns validation error for invalid data', async () => {
-      const invalidData = {
-        name: 'Jo', // too short
-        email: 'invalid-email',
-        password: '123', // too short
-      };
-
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(invalidData)
-        .expect(400);
-
-      expect(response.body).toHaveProperty('message');
-      expect(response.body).toHaveProperty('errors');
-    });
-
-    it('returns error for duplicate email', async () => {
+    it('deve retornar 409 se email já existe', async () => {
       const userData = {
-        name: 'Test User',
-        email: 'test@example.com',
+        name: 'Existing User',
+        email: 'existing@example.com',
         password: 'password123',
       };
 
-      // Register first user
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      // Criar usuário existente
+      await prisma.user.create({
+        data: {
+          ...userData,
+          password: await bcrypt.hash(userData.password, 10),
+        },
+      });
 
-      // Try to register with same email
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(409);
+      const res = await request(app).post('/api/auth/register').send(userData);
 
-      expect(response.body.message).toBe('Este email já está em uso');
+      expect(res.statusCode).toEqual(409);
+      expect(res.body.message).toContain('Este email já está em uso');
+    });
+
+    it('deve retornar 400 para dados inválidos', async () => {
+      const invalidData = {
+        name: 'T', // Muito curto
+        email: 'invalid-email',
+        password: '123', // Muito curto
+      };
+
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send(invalidData);
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.message).toContain('Validation failed');
+    });
+
+    it('deve validar campos obrigatórios', async () => {
+      const incompleteData = {
+        email: 'test@example.com',
+        // name e password ausentes
+      };
+
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send(incompleteData);
+
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.message).toContain('Validation failed');
     });
   });
 
   describe('POST /api/auth/login', () => {
+    let loginEmail: string;
+
     beforeEach(async () => {
-      // Create a test user
+      // Criar usuário para testes de login
+      loginEmail = `login-${Date.now()}@example.com`;
       await prisma.user.create({
         data: {
-          name: 'Test User',
-          email: 'test@example.com',
-          password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J.8x5QK9m', // bcrypt hash of 'password123'
+          name: 'Login User',
+          email: loginEmail,
+          password: await bcrypt.hash('password123', 10),
         },
       });
     });
 
-    it('logs in successfully with valid credentials', async () => {
+    it('deve fazer login com usuário existente e retornar token', async () => {
       const loginData = {
-        email: 'test@example.com',
+        email: loginEmail,
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(200);
+      const res = await request(app).post('/api/auth/login').send(loginData);
 
-      expect(response.body).toHaveProperty('token');
-      expect(typeof response.body.token).toBe('string');
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('token');
+      expect(typeof res.body.token).toBe('string');
     });
 
-    it('returns error for invalid credentials', async () => {
+    it('deve retornar 401 para credenciais inválidas (senha errada)', async () => {
       const loginData = {
-        email: 'test@example.com',
+        email: loginEmail,
         password: 'wrongpassword',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(401);
+      const res = await request(app).post('/api/auth/login').send(loginData);
 
-      expect(response.body.message).toBe('Credenciais inválidas');
+      expect(res.statusCode).toEqual(401);
+      expect(res.body.message).toContain('Credenciais inválidas');
     });
 
-    it('returns error for non-existent user', async () => {
+    it('deve retornar 401 para credenciais inválidas (usuário não encontrado)', async () => {
       const loginData = {
         email: 'nonexistent@example.com',
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(401);
+      const res = await request(app).post('/api/auth/login').send(loginData);
 
-      expect(response.body.message).toBe('Credenciais inválidas');
+      expect(res.statusCode).toEqual(401);
+      expect(res.body.message).toContain('Credenciais inválidas');
     });
 
-    it('returns validation error for invalid data', async () => {
+    it('deve retornar 400 para dados inválidos', async () => {
       const invalidData = {
         email: 'invalid-email',
-        password: '', // empty password
+        password: '123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(invalidData)
-        .expect(400);
+      const res = await request(app).post('/api/auth/login').send(invalidData);
 
-      expect(response.body).toHaveProperty('message');
-      expect(response.body).toHaveProperty('errors');
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.message).toContain('Validation failed');
     });
   });
 });

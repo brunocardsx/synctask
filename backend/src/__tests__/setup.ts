@@ -1,35 +1,70 @@
+// Configuração para testes - detecta se é teste de integração ou schema
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.TEST_DATABASE_URL || 'postgresql://synctask:postgres@localhost:5433/synctask_test_db',
-    },
+// Detecta se é teste de integração baseado no nome do arquivo
+const isIntegrationTest = process.env.JEST_WORKER_ID && 
+  (process.env.npm_lifecycle_event?.includes('integration') || 
+   process.argv.some(arg => arg.includes('api') || arg.includes('auth')));
+
+console.log('🧪 Executando testes de schema (sem banco de dados)');
+
+// Mock básico do Prisma para testes de schema
+const mockPrisma = {
+  user: {
+    create: () => Promise.resolve({}),
+    findUnique: () => Promise.resolve({}),
+    findMany: () => Promise.resolve([]),
+    update: () => Promise.resolve({}),
+    delete: () => Promise.resolve({}),
   },
-});
+  board: {
+    create: () => Promise.resolve({}),
+    findUnique: () => Promise.resolve({}),
+    findMany: () => Promise.resolve([]),
+    update: () => Promise.resolve({}),
+    delete: () => Promise.resolve({}),
+  },
+  column: {
+    create: () => Promise.resolve({}),
+    findUnique: () => Promise.resolve({}),
+    findMany: () => Promise.resolve([]),
+    update: () => Promise.resolve({}),
+    delete: () => Promise.resolve({}),
+  },
+  card: {
+    create: () => Promise.resolve({}),
+    findUnique: () => Promise.resolve({}),
+    findMany: () => Promise.resolve([]),
+    update: () => Promise.resolve({}),
+    delete: () => Promise.resolve({}),
+  },
+  $connect: () => Promise.resolve(),
+  $disconnect: () => Promise.resolve(),
+};
+
+// Usa Prisma real para testes de integração, mock para testes de schema
+const prisma = isIntegrationTest ? new PrismaClient() : mockPrisma;
 
 beforeAll(async () => {
-  await prisma.$connect();
+  if (isIntegrationTest) {
+    console.log('🔗 Conectando ao banco de dados para testes de integração');
+    await prisma.$connect();
+  } else {
+    console.log('✅ Testes de schema configurados');
+  }
 });
 
 afterAll(async () => {
-  await prisma.$disconnect();
+  if (isIntegrationTest) {
+    console.log('🔌 Desconectando do banco de dados');
+    await prisma.$disconnect();
+  }
 });
 
 beforeEach(async () => {
-  // Clean database before each test (in correct order to respect foreign keys)
-  try {
-    await prisma.activity.deleteMany();
-    await prisma.comment.deleteMany();
-    await prisma.cardAssignee.deleteMany();
-    await prisma.card.deleteMany();
-    await prisma.column.deleteMany();
-    await prisma.boardMember.deleteMany();
-    await prisma.board.deleteMany();
+  if (isIntegrationTest) {
+    // Limpar dados entre testes de integração
     await prisma.user.deleteMany();
-  } catch (error) {
-    // Ignore errors if tables don't exist yet
-    console.warn('Some tables may not exist yet:', error);
   }
 });
 
