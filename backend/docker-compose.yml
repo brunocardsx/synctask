@@ -1,16 +1,50 @@
 
+version: '3.8'
+
 services:
-  db:
-    image: postgres:latest
-    restart: always
+  postgres:
+    image: postgres:15-alpine
+    container_name: synctask-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: synctask
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: synctask_db
-    ports:
-      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U synctask -d synctask_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - synctask-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: synctask-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - synctask-network
 
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  synctask-network:
+    driver: bridge
