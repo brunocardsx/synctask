@@ -1,6 +1,6 @@
 # SyncTask
 
-Sistema de gerenciamento de tarefas colaborativo desenvolvido com React, Node.js e WebSockets. Permite criar boards estilo Kanban com sincronização em tempo real entre usuários.
+Sistema de gerenciamento de tarefas colaborativo desenvolvido com React, Node.js e Typescript. Permite criar boards estilo Kanban com sincronização em tempo real entre usuários.
 
 ##  Início Rápido
 
