@@ -10,6 +10,6 @@ describe("App", () => {
         <App />
       </BrowserRouter>
     );
-    expect(screen.getByText("SyncTask App")).toBeInTheDocument();
+    expect(screen.getByText("SyncTask")).toBeInTheDocument();
   });
 });
