@@ -2,7 +2,8 @@
   "build": {
     "builder": "NIXPACKS",
     "env": {
-      "NPM_CONFIG_CACHE": "/tmp/npm-cache"
+      "NPM_CONFIG_CACHE": "/tmp/npm-cache",
+      "NPM_CONFIG_NO_CACHE": "true"
     },
     "buildCommand": "npm install && npm run build"
   },
