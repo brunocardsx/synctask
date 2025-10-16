@@ -7,7 +7,7 @@
       "NPM_CONFIG_CACHE": "/tmp/npm-cache",
       "NPM_CONFIG_NO_CACHE": "true"
     },
-    "buildCommand": "npm install && npm run build"
+    "buildCommand": "ROLLUP_USE_NODEJS=true npm install && npm run build"
   },
   "deploy": {
     "startCommand": "npm run start"
