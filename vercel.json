@@ -1,6 +1,6 @@
 {
-  "installCommand": "npm install",
-  "buildCommand": "ROLLUP_USE_NODEJS=true npm run build",
+  "installCommand": "npm install --prefix frontend",
+  "buildCommand": "ROLLUP_USE_NODEJS=true npm run build --prefix frontend",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
   "rewrites": [
