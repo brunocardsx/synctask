@@ -1,7 +1,10 @@
 {
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "npm ci && npm run build"
+    "env": {
+      "NPM_CONFIG_CACHE": "/tmp/npm-cache"
+    },
+    "buildCommand": "npm install && npm run build"
   },
   "deploy": {
     "startCommand": "npm run start"
