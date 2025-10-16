@@ -1,0 +1,17 @@
+# Nixpacks config to deploy only the backend service
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = [
+  "npm ci --prefix backend"
+]
+
+[phases.build]
+cmds = [
+  "npm run build --prefix backend"
+]
+
+[start]
+cmd = "npm run start --prefix backend"
