@@ -28,10 +28,10 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "socket.io": "^4.8.1",
-    "typescript": "^5.4.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "typescript": "^5.4.5",
     "@babel/core": "^7.28.4",
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-typescript": "^7.27.1",
