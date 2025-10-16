@@ -13,9 +13,9 @@ describe('Auth Service', () => {
 
       const result = await registerNewUser(userData);
 
-      expect(result).toHaveProperty('token');
+      expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('userId');
-      expect(typeof result.token).toBe('string');
+      expect(typeof result.accessToken).toBe('string');
       expect(typeof result.userId).toBe('string');
 
       // Verificar se o usuário foi criado no banco
@@ -93,10 +93,11 @@ describe('Auth Service', () => {
         password: 'password123',
       };
 
-      const token = await loginUser(loginData);
+      const result = await loginUser(loginData);
 
-      expect(typeof token).toBe('string');
-      expect(token.length).toBeGreaterThan(0);
+      expect(result).toHaveProperty('accessToken');
+      expect(typeof result.accessToken).toBe('string');
+      expect(result.accessToken.length).toBeGreaterThan(0);
     });
 
     it('deve rejeitar senha incorreta', async () => {

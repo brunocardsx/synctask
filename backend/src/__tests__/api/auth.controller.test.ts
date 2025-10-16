@@ -35,7 +35,7 @@ describe('Auth Controller', () => {
       const res = await request(app).post('/api/auth/register').send(userData);
 
       expect(res.statusCode).toEqual(201);
-      expect(res.body).toHaveProperty('token');
+      expect(res.body).toHaveProperty('accessToken');
       expect(res.body).toHaveProperty('userId');
 
       const userInDb = await prisma.user.findUnique({
@@ -78,7 +78,7 @@ describe('Auth Controller', () => {
         .send(invalidData);
 
       expect(res.statusCode).toEqual(400);
-      expect(res.body.message).toContain('Validation failed');
+      expect(res.body.message).toContain('Dados de entrada inválidos');
     });
 
     it('deve validar campos obrigatórios', async () => {
@@ -92,7 +92,7 @@ describe('Auth Controller', () => {
         .send(incompleteData);
 
       expect(res.statusCode).toEqual(400);
-      expect(res.body.message).toContain('Validation failed');
+      expect(res.body.message).toContain('Dados de entrada inválidos');
     });
   });
 
@@ -120,8 +120,8 @@ describe('Auth Controller', () => {
       const res = await request(app).post('/api/auth/login').send(loginData);
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('token');
-      expect(typeof res.body.token).toBe('string');
+      expect(res.body).toHaveProperty('accessToken');
+      expect(typeof res.body.accessToken).toBe('string');
     });
 
     it('deve retornar 401 para credenciais inválidas (senha errada)', async () => {
@@ -157,7 +157,7 @@ describe('Auth Controller', () => {
       const res = await request(app).post('/api/auth/login').send(invalidData);
 
       expect(res.statusCode).toEqual(400);
-      expect(res.body.message).toContain('Validation failed');
+      expect(res.body.message).toContain('Dados de entrada inválidos');
     });
   });
 });

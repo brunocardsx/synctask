@@ -2,11 +2,27 @@
 import { PrismaClient } from '@prisma/client';
 
 // Detecta se é teste de integração baseado no nome do arquivo
-const isIntegrationTest = process.env.JEST_WORKER_ID && 
-  (process.env.npm_lifecycle_event?.includes('integration') || 
-   process.argv.some(arg => arg.includes('api') || arg.includes('auth')));
+const isIntegrationTest =
+  process.env.JEST_WORKER_ID &&
+  (process.env.npm_lifecycle_event?.includes('integration') ||
+    process.argv.some(
+      arg =>
+        arg.includes('api') ||
+        arg.includes('auth') ||
+        arg.includes('controller')
+    ));
 
-console.log('🧪 Executando testes de schema (sem banco de dados)');
+// Detecta automaticamente o tipo de teste
+const testFile = process.argv.find(arg => arg.includes('.test.')) || '';
+const isControllerTest = testFile.includes('controller');
+const isServiceTest =
+  testFile.includes('auth.service') || testFile.includes('auth/');
+
+if (isControllerTest || isServiceTest) {
+  console.log('🔗 Executando testes de integração (com banco de dados)');
+} else {
+  console.log('🧪 Executando testes de schema (sem banco de dados)');
+}
 
 // Mock básico do Prisma para testes de schema
 const mockPrisma = {
@@ -43,10 +59,13 @@ const mockPrisma = {
 };
 
 // Usa Prisma real para testes de integração, mock para testes de schema
-const prisma = isIntegrationTest ? new PrismaClient() : mockPrisma;
+const prisma =
+  isIntegrationTest || isControllerTest || isServiceTest
+    ? new PrismaClient()
+    : mockPrisma;
 
 beforeAll(async () => {
-  if (isIntegrationTest) {
+  if (isIntegrationTest || isControllerTest || isServiceTest) {
     console.log('🔗 Conectando ao banco de dados para testes de integração');
     await prisma.$connect();
   } else {
@@ -55,15 +74,18 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (isIntegrationTest) {
+  if (isIntegrationTest || isControllerTest || isServiceTest) {
     console.log('🔌 Desconectando do banco de dados');
     await prisma.$disconnect();
   }
 });
 
 beforeEach(async () => {
-  if (isIntegrationTest) {
-    // Limpar dados entre testes de integração
+  if (isIntegrationTest || isControllerTest || isServiceTest) {
+    // Limpar dados entre testes de integração (ordem respeitando foreign keys)
+    await prisma.card.deleteMany();
+    await prisma.column.deleteMany();
+    await prisma.board.deleteMany();
     await prisma.user.deleteMany();
   }
 });
