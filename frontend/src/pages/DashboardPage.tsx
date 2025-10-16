@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../services/api';
+import { UserProfile } from '../components/UserProfile';
+import { BoardStats } from '../components/BoardStats';
 
 // Interface para os boards - ainda estou aprendendo TypeScript
 interface Board {
@@ -10,6 +12,7 @@ interface Board {
 
 export default function DashboardPage() {
   console.log('DashboardPage rendered - this should not happen without auth!');
+  const navigate = useNavigate();
 
   // Verificar autenticação antes de renderizar
   const authToken = localStorage.getItem('authToken');
@@ -18,6 +21,13 @@ export default function DashboardPage() {
     window.location.href = '/login';
     return null;
   }
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('tokenExpiresIn');
+    navigate('/login');
+  };
 
   // Estados para gerenciar a página
   const [boards, setBoards] = useState<Board[]>([]);
@@ -101,15 +111,22 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto p-4">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Your Boards</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          + Create Board
-        </button>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            + Create Board
+          </button>
+          <UserProfile onLogout={handleLogout} />
+        </div>
       </div>
+
+      {/* Estatísticas */}
+      <BoardStats boards={boards} />
 
       {boards.length === 0 ? (
         <div className="text-center py-12">

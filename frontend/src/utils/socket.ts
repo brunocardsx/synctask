@@ -21,12 +21,12 @@ export const createSocketOptions = () => {
 };
 
 export const handleSocketError = (error: unknown): string => {
-    if (error.message) {
-        return error.message;
+    if (error && typeof error === 'object' && 'message' in error) {
+        return (error as any).message;
     }
 
-    if (error.type) {
-        switch (error.type) {
+    if (error && typeof error === 'object' && 'type' in error) {
+        switch ((error as any).type) {
             case 'TransportError':
                 return 'Erro de conexão. Verifique sua internet.';
             case 'ParseError':
@@ -55,7 +55,7 @@ export const createSocketEventHandlers = () => {
     };
 };
 
-export const createSocketConnection = (io: unknown) => {
+export const createSocketConnection = (io: any) => {
     const url = createSocketUrl();
     const options = createSocketOptions();
 
@@ -64,13 +64,13 @@ export const createSocketConnection = (io: unknown) => {
 
 export const joinBoardRoom = (socket: unknown, boardId: string): void => {
     if (socket && boardId) {
-        socket.emit(SOCKET_EVENTS.JOIN_BOARD, boardId);
+        (socket as any).emit(SOCKET_EVENTS.JOIN_BOARD, boardId);
     }
 };
 
 export const leaveBoardRoom = (socket: unknown, boardId: string): void => {
     if (socket && boardId) {
-        socket.emit(SOCKET_EVENTS.LEAVE_BOARD, boardId);
+        (socket as any).emit(SOCKET_EVENTS.LEAVE_BOARD, boardId);
     }
 };
 
@@ -81,7 +81,7 @@ export const setupSocketEventListeners = (
     if (!socket) return;
 
     Object.entries(eventHandlers).forEach(([event, handler]) => {
-        socket.on(event, handler);
+        (socket as any).on(event, handler);
     });
 };
 
@@ -92,22 +92,22 @@ export const removeSocketEventListeners = (
     if (!socket) return;
 
     events.forEach(event => {
-        socket.off(event);
+        (socket as any).off(event);
     });
 };
 
 export const disconnectSocket = (socket: unknown): void => {
     if (socket) {
-        socket.disconnect();
+        (socket as any).disconnect();
     }
 };
 
 export const isSocketConnected = (socket: unknown): boolean => {
-    return socket && socket.connected;
+    return socket && (socket as any).connected;
 };
 
 export const getSocketId = (socket: unknown): string | null => {
-    return socket ? socket.id : null;
+    return socket ? (socket as any).id : null;
 };
 
 export const createSocketReconnectionHandler = (
@@ -117,8 +117,8 @@ export const createSocketReconnectionHandler = (
 ): void => {
     if (!socket) return;
 
-    socket.on('reconnect', onReconnect);
-    socket.on('reconnect_error', onReconnectError);
+    (socket as any).on('reconnect', onReconnect);
+    (socket as any).on('reconnect_error', onReconnectError);
 };
 
 export const createSocketDisconnectionHandler = (
@@ -127,7 +127,7 @@ export const createSocketDisconnectionHandler = (
 ): void => {
     if (!socket) return;
 
-    socket.on('disconnect', onDisconnect);
+    (socket as any).on('disconnect', onDisconnect);
 };
 
 

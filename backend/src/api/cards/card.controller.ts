@@ -91,7 +91,7 @@ export const updateCard = async (req: Request, res: Response) => {
         const validatedData = updateCardSchema.parse(req.body);
         const { title, description } = validatedData;
 
-        const updatedCard = await cardService.updateCard(cardId!, title, description || '', currentUserId);
+        const updatedCard = await cardService.updateCard(cardId!, title || '', description || '', currentUserId);
 
         if (!updatedCard) {
             return res.status(HTTP_STATUS.NOT_FOUND).json({

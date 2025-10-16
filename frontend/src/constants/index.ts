@@ -1,7 +1,7 @@
 // Constantes centralizadas para o frontend SyncTask
 // Seguindo diretrizes: evitar magic strings, nomes específicos
 
-export const API_BASE_URL = 'http://localhost:3001/api' as const;
+export const API_BASE_URL = '/api' as const;
 export const SOCKET_URL = 'http://localhost:3001' as const;
 
 export const STORAGE_KEYS = {

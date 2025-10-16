@@ -87,8 +87,13 @@ export const hppConfig = (req: Request, res: Response, next: NextFunction) => {
     next();
 };
 
-// Compression middleware (manual implementation)
+// Compression middleware (disabled for development)
 export const compressionConfig = (req: Request, res: Response, next: NextFunction) => {
+    // Skip compression in development to avoid proxy issues
+    if (process.env.NODE_ENV === 'development') {
+        return next();
+    }
+
     const originalSend = res.send;
 
     res.send = function (data: any) {

@@ -17,8 +17,8 @@ export const createAuthHeaders = (): Record<string, string> => {
 };
 
 export const handleApiError = (error: unknown): string => {
-    if (error.response) {
-        const { status, data } = error.response;
+    if (error && typeof error === 'object' && 'response' in error) {
+        const { status, data } = (error as any).response;
 
         switch (status) {
             case HTTP_STATUS.UNAUTHORIZED:
@@ -36,7 +36,7 @@ export const handleApiError = (error: unknown): string => {
         }
     }
 
-    if (error.request) {
+    if (error && typeof error === 'object' && 'request' in error) {
         return ERROR_MESSAGES.NETWORK_ERROR;
     }
 
@@ -56,8 +56,8 @@ export const createApiRequest = async <T>(
     });
 
     if (!response.ok) {
-        const error = new Error(`HTTP ${response.status}`);
-        (error as { response: { status: number; data: unknown } }).response = {
+        const error = new Error(`HTTP ${response.status}`) as any;
+        error.response = {
             status: response.status,
             data: await response.json().catch(() => ({})),
         };
@@ -144,7 +144,7 @@ export const createUploadRequest = <T>(
                     const response = JSON.parse(xhr.responseText);
                     resolve(response);
                 } catch {
-                    resolve(xhr.responseText as string);
+                    resolve(xhr.responseText as any);
                 }
             } else {
                 reject(new Error(`HTTP ${xhr.status}`));

@@ -1,10 +1,13 @@
-import { DndContext } from '@dnd-kit/core';
+import { DndContext, type DragEndEvent, type DragOverEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CardModal } from '../components/CardModal';
 import { Column } from '../components/Column';
+import { MembersModal } from '../components/MembersModal';
+import { BoardMembers } from '../components/BoardMembers';
 import { useSocket } from '../hooks/useSocket';
+import { getUserData } from '../utils/storage';
 import apiClient from '../services/api';
 
 interface Card {
@@ -53,6 +56,13 @@ export default function BoardPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ userId: string | null; isOwner: boolean; isAdmin: boolean }>({
+    userId: null,
+    isOwner: false,
+    isAdmin: false
+  });
+  const [boardOwner, setBoardOwner] = useState<{ id: string; name: string; email: string } | null>(null);
 
   // Busca inicial dos dados do board
   useEffect(() => {
@@ -108,6 +118,19 @@ export default function BoardPage() {
         }
 
         setBoard(boardData);
+        
+        // Determinar permissões do usuário atual
+        const userData = getUserData();
+        const isOwner = userData.userId === boardData.ownerId;
+        
+        setCurrentUser({
+          userId: userData.userId,
+          isOwner,
+          isAdmin: false // Será determinado quando carregarmos os membros
+        });
+
+        // Buscar informações do owner
+        await fetchBoardOwner(boardData.ownerId);
       } catch (err) {
         console.error('Erro ao carregar board:', err);
         setError('Erro ao carregar o board');
@@ -119,8 +142,21 @@ export default function BoardPage() {
     fetchBoard();
   }, [boardId]);
 
+  // Função para buscar informações do owner do board
+  const fetchBoardOwner = async (ownerId: string) => {
+    try {
+      const authToken = localStorage.getItem('authToken');
+      const response = await apiClient.get(`/users/${ownerId}`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      setBoardOwner(response.data);
+    } catch (err) {
+      console.error('Erro ao carregar informações do owner:', err);
+    }
+  };
+
   // Função para lidar com drag over (mover entre colunas)
-  const handleDragOver = (event: { active: { id: string }; over: { id: string } | null }) => {
+  const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
 
     if (!over || !board) return;
@@ -170,7 +206,7 @@ export default function BoardPage() {
   };
 
   // Função para lidar com o fim do drag
-  const handleDragEnd = (event: { active: { id: string }; over: { id: string } | null }) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (!over || !board) return;
@@ -263,11 +299,12 @@ export default function BoardPage() {
 
   // Configuração do Socket
   useEffect(() => {
-    socket.connect();
+    if (socket) {
+      socket.connect();
 
-    if (boardId) {
-      socket.emit('join_board', boardId);
-    }
+      if (boardId) {
+        socket.emit('join_board', boardId);
+      }
 
     // Listener para nova coluna criada
     socket.on('column:created', (newColumn: Column) => {
@@ -291,9 +328,10 @@ export default function BoardPage() {
       // TODO: Implementar atualização de card movido
     });
 
-    return () => {
-      socket.disconnect();
-    };
+      return () => {
+        socket.disconnect();
+      };
+    }
   }, [boardId, socket]);
 
   if (loading) {
@@ -311,7 +349,23 @@ export default function BoardPage() {
   return (
     <DndContext onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
       <div className="p-4">
-        <h1 className="text-3xl font-bold mb-6">{board.name}</h1>
+        {/* Header do Board */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">{board.name}</h1>
+            <div className="mt-2">
+              <BoardMembers boardId={boardId!} />
+            </div>
+          </div>
+          {(currentUser.isOwner || currentUser.isAdmin) && (
+            <button
+              onClick={() => setIsMembersModalOpen(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"
+            >
+              👥 Gerenciar Membros
+            </button>
+          )}
+        </div>
 
         <div className="flex space-x-6 overflow-x-auto">
           {board.columns.map((column) => (
@@ -340,6 +394,15 @@ export default function BoardPage() {
         }}
         onCardUpdated={handleCardUpdated}
         onCardDeleted={handleCardDeleted}
+      />
+
+      <MembersModal
+        boardId={boardId!}
+        isOpen={isMembersModalOpen}
+        onClose={() => setIsMembersModalOpen(false)}
+        currentUser={currentUser}
+        onUserRoleUpdated={(isAdmin) => setCurrentUser(prev => ({ ...prev, isAdmin }))}
+        boardOwner={boardOwner || undefined}
       />
     </DndContext>
   );

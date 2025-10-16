@@ -7,7 +7,7 @@ interface CardProps {
   onCardClick: (card: CardType) => void;
 }
 
-const createCardStyle = (transform: CSS.Transform | null, transition: string | undefined) => ({
+const createCardStyle = (transform: any, transition: string | undefined) => ({
   transform: CSS.Transform.toString(transform),
   transition,
 });
