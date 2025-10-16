@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "npm run start --prefix backend",
-    "build": "node -e \"process.exit(process.env.RAILWAY?0:1)\" && npm run build:backend || (npm ci --prefix frontend && npm run build --prefix frontend)",
+    "build": "npm run build:backend",
     "dev": "npm run build:backend && npm run start:db && concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:local": "npm run build:backend && concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm run dev --prefix backend",
