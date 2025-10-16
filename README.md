@@ -1,8 +1,8 @@
 # SyncTask
 
-Sistema de gerenciamento de tarefas colaborativo desenvolvido com React, Node.js e WebSockets. Permite criar boards estilo Kanban com sincronização em tempo real entre usuários.
+Sistema de gerenciamento de tarefas colaborativo desenvolvido com React, Node.js e Typescript. Permite criar boards estilo Kanban com sincronização em tempo real entre usuários.
 
-## 🚀 Início Rápido
+##  Início Rápido
 
 ```bash
 # Clone o projeto
@@ -19,7 +19,7 @@ cp backend/.env.example backend/.env
 ./scripts/start-dev.sh
 ```
 
-## 📁 Estrutura do Projeto
+##  Estrutura do Projeto
 
 ```
 synctask/
@@ -52,38 +52,6 @@ synctask/
     └── tsconfig.json
 ```
 
-## 🛠️ Scripts Disponíveis
-
-```bash
-# Desenvolvimento
-npm run dev              # Inicia frontend e backend
-npm run dev:backend      # Apenas backend
-npm run dev:frontend     # Apenas frontend
-
-# Banco de dados
-npm run start:db         # Inicia PostgreSQL
-npm run stop:db          # Para PostgreSQL
-
-# Qualidade de código
-npm run lint             # Executa ESLint
-npm run lint:fix         # Corrige problemas do ESLint
-npm run format           # Formata código com Prettier
-npm run type-check       # Verifica tipos TypeScript
-
-# Testes
-npm run test             # Executa testes
-npm run test:watch       # Testes em modo watch
-
-# Utilitários
-npm run setup            # Configura ambiente completo
-npm run clean            # Limpa dependências e builds
-```
-
-## 📚 Documentação
-
-- **[Documentação Completa](./docs/README.md)** - Guia detalhado de instalação e uso
-- **[Diretrizes de Código](./docs/CODING_GUIDELINES.md)** - Padrões e boas práticas
-- **[Como Usar](./docs/COMO_USAR.md)** - Guia de uso da aplicação
 
 ## 🎯 Funcionalidades
 
@@ -107,20 +75,6 @@ npm run clean            # Limpa dependências e builds
 - Loading states
 - Feedback visual
 
-## 🚀 Deploy
-
-### Desenvolvimento Local
-```bash
-# Inicia tudo automaticamente
-./scripts/start-dev.sh
-```
-
-### Produção
-```bash
-# Build e deploy
-npm run build:backend
-npm run build:frontend
-```
 
 ## 🤝 Contribuindo
 
