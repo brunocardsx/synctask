@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import compression from 'compression';
 import mongoSanitize from 'express-mongo-sanitize';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
@@ -87,31 +88,8 @@ export const hppConfig = (req: Request, res: Response, next: NextFunction) => {
     next();
 };
 
-// Compression middleware (disabled for development)
-export const compressionConfig = (req: Request, res: Response, next: NextFunction) => {
-    // Skip compression in development to avoid proxy issues
-    if (process.env.NODE_ENV === 'development') {
-        return next();
-    }
-
-    const originalSend = res.send;
-
-    res.send = function (data: any) {
-        if (req.headers['x-no-compression']) {
-            return originalSend.call(this, data);
-        }
-
-        const acceptEncoding = req.headers['accept-encoding'] || '';
-        if (acceptEncoding.includes('gzip')) {
-            res.setHeader('Content-Encoding', 'gzip');
-            // In production, you'd use zlib.gzip here
-        }
-
-        return originalSend.call(this, data);
-    };
-
-    next();
-};
+// HTTP compression
+export const compressionConfig = compression();
 
 // Security headers middleware
 export const securityHeaders = (req: Request, res: Response, next: NextFunction) => {
