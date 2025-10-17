@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Card } from '../types/index.js';
-import { createPostRequest, handleApiError } from '../utils/api.js';
+import apiClient from '../services/api.js';
 import { isValidString } from '../utils/validation.js';
 
 interface AddCardButtonProps {
@@ -40,7 +40,8 @@ const createCard = async (columnId: string, title: string, description: string):
     description: description.trim(),
   };
 
-  return createPostRequest<Card>(endpoint, data);
+  const response = await apiClient.post(endpoint, data);
+  return response.data;
 };
 
 const handleCardCreation = async (
@@ -62,8 +63,8 @@ const handleCardCreation = async (
     setTitle('');
     setDescription('');
     setIsFormVisible(false);
-  } catch (error) {
-    const errorMessage = handleApiError(error);
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || error.message || 'Erro desconhecido';
     alert(`Erro ao criar card: ${errorMessage}`);
   } finally {
     setIsLoading(false);

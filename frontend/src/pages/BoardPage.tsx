@@ -250,6 +250,13 @@ export default function BoardPage() {
         (card) => card.id === activeId
       );
       if (cardToMove) {
+        console.log("Emitindo card:moved entre colunas:", {
+          cardId: activeId,
+          fromColumnId: activeColumn.id,
+          toColumnId: overColumn.id,
+          newOrder: overColumn.cards.length,
+          boardId: boardId,
+        });
         socket.emit("card:moved", {
           cardId: activeId,
           fromColumnId: activeColumn.id,
@@ -313,6 +320,14 @@ export default function BoardPage() {
         (card) => card.id === activeId
       );
       if (cardToMove) {
+        console.log("Emitindo card:moved dentro da coluna:", {
+          cardId: activeId,
+          fromColumnId: activeColumn.id,
+          toColumnId: overId.startsWith("column-") ? overId : activeColumn.id,
+          newOrder:
+            overCardIndex !== -1 ? overCardIndex : activeColumn.cards.length,
+          boardId: boardId,
+        });
         socket.emit("card:moved", {
           cardId: activeId,
           fromColumnId: activeColumn.id,
@@ -394,6 +409,7 @@ export default function BoardPage() {
       socket.connect();
 
       if (boardId) {
+        console.log("Entrando na sala do board:", boardId);
         socket.emit("join_board", boardId);
       }
 
@@ -435,41 +451,47 @@ export default function BoardPage() {
         });
       });
 
-      socket.on("card:moved", (data: {
-        cardId: string;
-        oldColumnId: string;
-        newColumnId: string;
-        newOrder: number;
-        card: Card;
-      }) => {
-        console.log("Card movido:", data);
-        setBoard((currentBoard) => {
-          if (!currentBoard) return null;
+      socket.on(
+        "card:moved",
+        (data: {
+          cardId: string;
+          oldColumnId: string;
+          newColumnId: string;
+          newOrder: number;
+          card: Card;
+        }) => {
+          console.log("Card movido:", data);
+          setBoard((currentBoard) => {
+            if (!currentBoard) return null;
 
-          const newColumns = currentBoard.columns.map((column) => {
-            // Remover card da coluna antiga
-            if (column.id === data.oldColumnId) {
-              return {
-                ...column,
-                cards: column.cards.filter((card) => card.id !== data.cardId),
-              };
-            }
+            const newColumns = currentBoard.columns.map((column) => {
+              // Remover card da coluna antiga
+              if (column.id === data.oldColumnId) {
+                return {
+                  ...column,
+                  cards: column.cards.filter((card) => card.id !== data.cardId),
+                };
+              }
 
-            // Adicionar card na nova coluna
-            if (column.id === data.newColumnId) {
-              const updatedCard = { ...data.card, columnId: data.newColumnId };
-              return {
-                ...column,
-                cards: [...column.cards, updatedCard],
-              };
-            }
+              // Adicionar card na nova coluna
+              if (column.id === data.newColumnId) {
+                const updatedCard = {
+                  ...data.card,
+                  columnId: data.newColumnId,
+                };
+                return {
+                  ...column,
+                  cards: [...column.cards, updatedCard],
+                };
+              }
 
-            return column;
+              return column;
+            });
+
+            return { ...currentBoard, columns: newColumns };
           });
-
-          return { ...currentBoard, columns: newColumns };
-        });
-      });
+        }
+      );
 
       return () => {
         socket.disconnect();
