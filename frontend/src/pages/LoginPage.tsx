@@ -13,7 +13,17 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { ClipboardList, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import {
+  ClipboardList,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Sparkles,
+  ArrowRight,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import apiClient from "../services/api";
 
 export default function LoginPage() {
@@ -36,11 +46,20 @@ export default function LoginPage() {
         password,
       });
 
-      const { accessToken, refreshToken, expiresIn } = response.data;
+      const { accessToken, refreshToken, userId, userName, expiresIn } =
+        response.data;
 
       localStorage.setItem("authToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("tokenExpiresIn", expiresIn);
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userId", userId);
+      localStorage.setItem("userName", userName);
+
+      console.log("Dados salvos no localStorage:");
+      console.log("- userId:", userId);
+      console.log("- userName:", userName);
+      console.log("- userEmail:", email);
 
       navigate("/");
     } catch (err: any) {
@@ -61,87 +80,100 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
+        <div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
+        <div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"
+          style={{ animationDelay: "2s" }}
+        ></div>
+      </div>
+
+      <div className="w-full max-w-md space-y-8 relative z-10">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-gradient-to-r from-slate-900 to-slate-700 rounded-xl flex items-center justify-center shadow-lg mb-6">
-            <ClipboardList className="h-8 w-8 text-white" />
+          <div className="mx-auto h-20 w-20 bg-gradient-to-br from-purple-600 to-purple-700 rounded-2xl flex items-center justify-center shadow-2xl mb-8 relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl blur opacity-75"></div>
+            <ClipboardList className="h-10 w-10 text-white relative z-10" />
+            <Sparkles className="h-4 w-4 text-purple-200 absolute -top-1 -right-1 animate-pulse" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-700 to-purple-600 bg-clip-text text-transparent mb-3">
             Bem-vindo de volta
           </h1>
-          <p className="text-slate-600">
+          <p className="text-gray-600 text-lg">
             Entre na sua conta para continuar organizando suas tarefas
           </p>
         </div>
 
         {/* Login Card */}
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl text-center">Entrar</CardTitle>
-            <CardDescription className="text-center">
+        <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-xl">
+          <CardHeader className="space-y-2 pb-6 text-center">
+            <CardTitle className="text-2xl font-semibold text-gray-900">
+              Entrar
+            </CardTitle>
+            <CardDescription className="text-gray-600">
               Digite suas credenciais para acessar sua conta
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-red-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-red-800">{error}</p>
-                  </div>
+                  <AlertCircle className="h-5 w-5 text-red-500 mr-3 flex-shrink-0" />
+                  <p className="text-sm text-red-700">{error}</p>
                 </div>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-medium text-gray-900"
+                >
+                  Email
+                </Label>
+                <div className="relative group">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-400 transition-colors group-focus-within:text-purple-600" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className="pl-12 h-12 border-purple-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-medium text-gray-900"
+                >
+                  Senha
+                </Label>
+                <div className="relative group">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-400 transition-colors group-focus-within:text-purple-600" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Digite sua senha"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10"
+                    className="pl-12 pr-12 h-12 border-purple-200 focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 h-4 w-4 text-slate-400 hover:text-slate-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-400 hover:text-purple-600 transition-colors"
                   >
                     {showPassword ? <EyeOff /> : <Eye />}
                   </button>
@@ -149,28 +181,46 @@ export default function LoginPage() {
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Checkbox
                     id="remember"
                     checked={rememberMe}
                     onCheckedChange={(checked) =>
                       setRememberMe(checked as boolean)
                     }
+                    className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                   />
-                  <Label htmlFor="remember" className="text-sm">
+                  <Label
+                    htmlFor="remember"
+                    className="text-sm text-gray-600 cursor-pointer"
+                  >
                     Lembrar de mim
                   </Label>
                 </div>
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-slate-600 hover:text-slate-900 underline"
+                  className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
                 >
                   Esqueceu a senha?
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Entrando..." : "Entrar"}
+              <Button
+                type="submit"
+                className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium text-base shadow-lg hover:shadow-xl transition-all duration-200 group"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Entrando...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    Entrar
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </div>
+                )}
               </Button>
             </form>
 
@@ -179,16 +229,18 @@ export default function LoginPage() {
                 <Separator className="w-full" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-500">Ou</span>
+                <span className="bg-white px-3 text-gray-500 font-medium">
+                  Ou
+                </span>
               </div>
             </div>
 
             <div className="text-center">
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-gray-600">
                 Não tem uma conta?{" "}
                 <Link
                   to="/register"
-                  className="font-medium text-slate-900 hover:underline"
+                  className="font-semibold text-purple-600 hover:text-purple-700 transition-colors"
                 >
                   Cadastre-se aqui
                 </Link>
@@ -198,22 +250,23 @@ export default function LoginPage() {
         </Card>
 
         {/* Demo Account */}
-        <Card className="bg-slate-50 border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-slate-900">
+        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg text-purple-800 flex items-center">
+              <CheckCircle className="h-5 w-5 text-purple-600 mr-2" />
               Conta de Demonstração
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Mail className="h-4 w-4 text-slate-500" />
-              <span className="text-sm text-slate-600">
+          <CardContent className="space-y-3">
+            <div className="flex items-center space-x-3 p-3 bg-white/60 rounded-lg">
+              <Mail className="h-4 w-4 text-purple-500" />
+              <span className="text-sm text-purple-700">
                 <strong>Email:</strong> joao@teste.com
               </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Lock className="h-4 w-4 text-slate-500" />
-              <span className="text-sm text-slate-600">
+            <div className="flex items-center space-x-3 p-3 bg-white/60 rounded-lg">
+              <Lock className="h-4 w-4 text-purple-500" />
+              <span className="text-sm text-purple-700">
                 <strong>Senha:</strong> 123456
               </span>
             </div>
