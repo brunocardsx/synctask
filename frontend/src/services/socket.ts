@@ -36,9 +36,29 @@ const createSocket = (): Socket => {
   });
 };
 
+// Adicionar listeners de debug
+const addDebugListeners = (socket: Socket) => {
+  socket.on('connect', () => {
+    console.log('🔌 Socket conectado:', socket.id);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('🔌 Socket desconectado:', reason);
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('🔌 Erro de conexão do socket:', error);
+  });
+
+  socket.on('error', (error) => {
+    console.error('🔌 Erro do socket:', error);
+  });
+};
+
 export const getSocket = (): Socket => {
   if (!socketInstance) {
     socketInstance = createSocket();
+    addDebugListeners(socketInstance);
   }
   return socketInstance;
 };
@@ -48,6 +68,7 @@ export const reconnectSocket = (): Socket => {
     socketInstance.disconnect();
   }
   socketInstance = createSocket();
+  addDebugListeners(socketInstance);
   return socketInstance;
 };
 

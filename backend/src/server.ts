@@ -53,8 +53,8 @@ io.on('connection', socket => {
       // Emitir evento para todos os clientes conectados ao board
       socket.to(`board-${boardId}`).emit('card:moved', {
         cardId,
-        fromColumnId,
-        toColumnId,
+        oldColumnId: fromColumnId,
+        newColumnId: toColumnId,
         newOrder,
         movedBy: socket.id,
       });

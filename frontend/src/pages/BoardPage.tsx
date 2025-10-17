@@ -413,6 +413,11 @@ export default function BoardPage() {
         socket.emit("join_board", boardId);
       }
 
+      // Listener para confirmação de entrada na sala
+      socket.on("joined_board", (data: { boardId: string }) => {
+        console.log("✅ Confirmado: Entrou na sala do board:", data.boardId);
+      });
+
       // Listener para nova coluna criada
       socket.on("column:created", (newColumn: Column) => {
         console.log("Nova coluna recebida:", newColumn);
@@ -433,12 +438,24 @@ export default function BoardPage() {
       });
 
       socket.on("card:created", (newCard: Card) => {
-        console.log("Novo card criado:", newCard);
+        console.log("Novo card criado via WebSocket:", newCard);
         setBoard((currentBoard) => {
           if (!currentBoard) return null;
 
           const newColumns = currentBoard.columns.map((column) => {
             if (column.id === newCard.columnId) {
+              // Verificar se o card já existe para evitar duplicação
+              const cardExists = column.cards.some(
+                (card) => card.id === newCard.id
+              );
+              if (cardExists) {
+                console.log(
+                  "Card já existe, ignorando duplicação:",
+                  newCard.id
+                );
+                return column;
+              }
+
               return {
                 ...column,
                 cards: [...column.cards, newCard],
@@ -458,11 +475,36 @@ export default function BoardPage() {
           oldColumnId: string;
           newColumnId: string;
           newOrder: number;
-          card: Card;
+          movedBy: string;
         }) => {
-          console.log("Card movido:", data);
+          console.log("Card movido via WebSocket:", data);
+          
+          // Ignorar se o movimento veio do próprio usuário
+          if (data.movedBy === socket.id) {
+            console.log("Movimento ignorado - veio do próprio usuário");
+            return;
+          }
+
           setBoard((currentBoard) => {
             if (!currentBoard) return null;
+
+            // Encontrar o card original primeiro
+            let originalCard: Card | null = null;
+            let sourceColumn: Column | null = null;
+            
+            for (const column of currentBoard.columns) {
+              const foundCard = column.cards.find(card => card.id === data.cardId);
+              if (foundCard) {
+                originalCard = foundCard;
+                sourceColumn = column;
+                break;
+              }
+            }
+
+            if (!originalCard) {
+              console.log("Card não encontrado para movimento:", data.cardId);
+              return currentBoard;
+            }
 
             const newColumns = currentBoard.columns.map((column) => {
               // Remover card da coluna antiga
@@ -476,15 +518,20 @@ export default function BoardPage() {
               // Adicionar card na nova coluna
               if (column.id === data.newColumnId) {
                 const updatedCard = {
-                  ...data.card,
+                  ...originalCard,
                   columnId: data.newColumnId,
                 };
+                
+                // Inserir na posição correta
+                const newCards = [...column.cards];
+                newCards.splice(data.newOrder, 0, updatedCard);
+                
                 return {
                   ...column,
-                  cards: [...column.cards, updatedCard],
+                  cards: newCards,
                 };
               }
-
+              
               return column;
             });
 
