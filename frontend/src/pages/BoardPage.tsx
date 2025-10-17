@@ -248,6 +248,22 @@ export default function BoardPage() {
 
       return { ...currentBoard, columns: newColumns };
     });
+
+    // Emitir evento de movimento de card entre colunas via WebSocket
+    if (socket) {
+      const cardToMove = activeColumn.cards.find(
+        (card) => card.id === activeId
+      );
+      if (cardToMove) {
+        socket.emit("card:moved", {
+          cardId: activeId,
+          fromColumnId: activeColumn.id,
+          toColumnId: overColumn.id,
+          newOrder: overColumn.cards.length,
+          boardId: boardId,
+        });
+      }
+    }
   };
 
   // Função para lidar com o fim do drag
@@ -295,7 +311,23 @@ export default function BoardPage() {
     }
 
     console.log("Drag ended:", { activeId, overId });
-    // TODO: Aqui você implementaria a chamada para a API para salvar a nova posição
+
+    // Emitir evento de movimento de card via WebSocket
+    if (socket) {
+      const cardToMove = activeColumn.cards.find(
+        (card) => card.id === activeId
+      );
+      if (cardToMove) {
+        socket.emit("card:moved", {
+          cardId: activeId,
+          fromColumnId: activeColumn.id,
+          toColumnId: overId.startsWith("column-") ? overId : activeColumn.id,
+          newOrder:
+            overCardIndex !== -1 ? overCardIndex : activeColumn.cards.length,
+          boardId: boardId,
+        });
+      }
+    }
   };
 
   // Funções para lidar com cards

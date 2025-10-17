@@ -1,6 +1,14 @@
 import axios from "axios";
 
-const apiBaseUrl = (import.meta as any).env?.VITE_API_URL || "/api";
+const apiBaseUrl = (() => {
+  // Em desenvolvimento, usar localhost
+  if (import.meta.env.DEV) {
+    return "http://localhost:3001/api";
+  }
+
+  // Em produção, usar o domínio do Railway
+  return "https://synctask-production.up.railway.app/api";
+})();
 
 const apiClient = axios.create({
   baseURL: apiBaseUrl,

@@ -7,23 +7,19 @@ const getSocketURL = (): string => {
     return "http://localhost:3001";
   }
 
-  // Em produção, usar a URL da API
-  const apiBaseUrl = (import.meta as any).env?.VITE_API_URL || "/api";
-
-  if (apiBaseUrl.startsWith("http")) {
-    return apiBaseUrl.replace("/api", "");
-  }
-
-  // Fallback para localhost em desenvolvimento
-  return "http://localhost:3001";
+  // Em produção, usar o domínio do Railway
+  return "https://synctask-production.up.railway.app";
 };
 
 let socketInstance: Socket | null = null;
 
 const createSocket = (): Socket => {
   const token = getAuthToken();
-  console.log("Socket: Criando conexão com token:", token ? "✅ Presente" : "❌ Ausente");
-  
+  console.log(
+    "Socket: Criando conexão com token:",
+    token ? "✅ Presente" : "❌ Ausente"
+  );
+
   return io(getSocketURL(), {
     autoConnect: false,
     transports: ["websocket", "polling"],
@@ -33,8 +29,8 @@ const createSocket = (): Socket => {
     reconnectionAttempts: 5,
     maxReconnectionAttempts: 5,
     auth: {
-      token: token
-    }
+      token: token,
+    },
   });
 };
 

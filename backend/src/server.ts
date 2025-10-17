@@ -34,6 +34,41 @@ io.on('connection', socket => {
     console.log(`💬 Cliente ${socket.id} saiu do chat do board: ${boardId}`);
   });
 
+  // Evento para movimento de cards
+  socket.on('card:moved', data => {
+    try {
+      console.log(`🔄 Card movido:`, data);
+
+      const { cardId, fromColumnId, toColumnId, newOrder, boardId } = data;
+
+      if (!cardId || !fromColumnId || !toColumnId || !boardId) {
+        socket.emit('card_move_error', {
+          message: 'Dados inválidos para movimento de card',
+        });
+        return;
+      }
+
+      // Emitir evento para todos os clientes conectados ao board
+      socket.to(`board-${boardId}`).emit('card:moved', {
+        cardId,
+        fromColumnId,
+        toColumnId,
+        newOrder,
+        movedBy: socket.id,
+      });
+
+      console.log(
+        `🔄 Card ${cardId} movido de ${fromColumnId} para ${toColumnId} no board ${boardId}`
+      );
+    } catch (error) {
+      console.error('Erro ao processar movimento de card:', error);
+      socket.emit('card_move_error', {
+        message:
+          error instanceof Error ? error.message : 'Erro interno do servidor',
+      });
+    }
+  });
+
   socket.on('send_chat_message', async data => {
     try {
       console.log(
