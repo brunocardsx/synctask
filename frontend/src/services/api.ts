@@ -5,9 +5,9 @@ const apiBaseUrl = (() => {
   if (import.meta.env.DEV) {
     return "http://localhost:3001/api";
   }
-
-  // Em produção, usar o domínio do Railway
-  return "https://synctask-production.up.railway.app/api";
+  
+  // Em produção, usar a variável de ambiente ou fallback para Railway
+  return `${import.meta.env.VITE_API_URL || "https://synctask-production.up.railway.app"}/api`;
 })();
 
 const apiClient = axios.create({

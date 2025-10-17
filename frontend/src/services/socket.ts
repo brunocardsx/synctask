@@ -6,9 +6,9 @@ const getSocketURL = (): string => {
   if (import.meta.env.DEV) {
     return "http://localhost:3001";
   }
-
-  // Em produção, usar o domínio do Railway
-  return "https://synctask-production.up.railway.app";
+  
+  // Em produção, usar a variável de ambiente ou fallback para Railway
+  return import.meta.env.VITE_API_URL || "https://synctask-production.up.railway.app";
 };
 
 let socketInstance: Socket | null = null;
@@ -27,7 +27,6 @@ const createSocket = (): Socket => {
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionAttempts: 5,
-    maxReconnectionAttempts: 5,
     auth: {
       token: token,
     },
