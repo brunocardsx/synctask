@@ -22,4 +22,9 @@ const getSocketURL = (): string => {
 export const socket = io(getSocketURL(), {
   autoConnect: true,
   transports: ["websocket", "polling"],
+  timeout: 20000,
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionAttempts: 5,
+  maxReconnectionAttempts: 5,
 });
