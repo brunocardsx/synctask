@@ -1,4 +1,5 @@
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
+import { getAuthToken } from "../utils/storage";
 
 const getSocketURL = (): string => {
   // Em desenvolvimento, usar localhost
@@ -9,7 +10,6 @@ const getSocketURL = (): string => {
   // Em produção, usar a URL da API
   const apiBaseUrl = (import.meta as any).env?.VITE_API_URL || "/api";
 
-  // Se VITE_API_URL é uma URL completa, usar ela
   if (apiBaseUrl.startsWith("http")) {
     return apiBaseUrl.replace("/api", "");
   }
@@ -18,13 +18,40 @@ const getSocketURL = (): string => {
   return "http://localhost:3001";
 };
 
-// Instância global do socket com conexão automática
-export const socket = io(getSocketURL(), {
-  autoConnect: true,
-  transports: ["websocket", "polling"],
-  timeout: 20000,
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionAttempts: 5,
-  maxReconnectionAttempts: 5,
-});
+let socketInstance: Socket | null = null;
+
+const createSocket = (): Socket => {
+  const token = getAuthToken();
+  console.log("Socket: Criando conexão com token:", token ? "✅ Presente" : "❌ Ausente");
+  
+  return io(getSocketURL(), {
+    autoConnect: false,
+    transports: ["websocket", "polling"],
+    timeout: 20000,
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionAttempts: 5,
+    maxReconnectionAttempts: 5,
+    auth: {
+      token: token
+    }
+  });
+};
+
+export const getSocket = (): Socket => {
+  if (!socketInstance) {
+    socketInstance = createSocket();
+  }
+  return socketInstance;
+};
+
+export const reconnectSocket = (): Socket => {
+  if (socketInstance) {
+    socketInstance.disconnect();
+  }
+  socketInstance = createSocket();
+  return socketInstance;
+};
+
+// Instância global do socket
+export const socket = getSocket();

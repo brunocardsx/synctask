@@ -1,46 +1,64 @@
-import React, { createContext, useEffect } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import { Socket } from "socket.io-client";
-import { socket } from "../services/socket";
-import { getUserId } from "../utils/storage";
+import { getSocket, reconnectSocket } from "../services/socket";
+import { getUserId, getAuthToken } from "../utils/storage";
 
 export const SocketContext = createContext<Socket | null>(null);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  useEffect(() => {
-    console.log("SocketProvider: Configurando listeners do socket");
+  const [socket, setSocket] = useState<Socket | null>(null);
 
-    socket.on("connect", () => {
-      console.log("Socket conectado:", socket.id);
+  useEffect(() => {
+    console.log("SocketProvider: Configurando socket");
+
+    const token = getAuthToken();
+    let currentSocket: Socket;
+
+    if (token) {
+      console.log("SocketProvider: Token encontrado, criando socket");
+      currentSocket = getSocket();
+      setSocket(currentSocket);
+    } else {
+      console.log("SocketProvider: Sem token, não criando socket");
+      return;
+    }
+
+    currentSocket.on("connect", () => {
+      console.log("Socket conectado:", currentSocket.id);
 
       // Conectar usuário às notificações quando conectado
       const userId = getUserId();
       if (userId) {
-        socket.emit("join_user", userId);
+        currentSocket.emit("join_user", userId);
         console.log("Usuário conectado às notificações:", userId);
       }
     });
 
-    socket.on("disconnect", () => {
+    currentSocket.on("disconnect", () => {
       console.log("Socket desconectado");
     });
 
-    socket.on("connect_error", (error) => {
+    currentSocket.on("connect_error", (error) => {
       console.error("Erro de conexão do socket:", error);
     });
 
-    socket.on("notification", (notification) => {
+    currentSocket.on("notification", (notification) => {
       console.log("Nova notificação recebida:", notification);
-      // Aqui você pode implementar um sistema de notificações toast
-      // Por exemplo, usando react-hot-toast ou similar
     });
 
+    // Conectar se há token
+    if (token && !currentSocket.connected) {
+      console.log("SocketProvider: Conectando socket com token");
+      currentSocket.connect();
+    }
+
     return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off("connect_error");
-      socket.off("notification");
+      currentSocket.off("connect");
+      currentSocket.off("disconnect");
+      currentSocket.off("connect_error");
+      currentSocket.off("notification");
     };
   }, []);
 
