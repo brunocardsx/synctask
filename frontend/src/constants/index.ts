@@ -1,8 +1,8 @@
 // Constantes centralizadas para o frontend SyncTask
 // Seguindo diretrizes: evitar magic strings, nomes específicos
 
-export const API_BASE_URL = '/api' as const;
-export const SOCKET_URL = 'http://localhost:3001' as const;
+export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api' as const;
+export const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001' as const;
 
 export const STORAGE_KEYS = {
     AUTH_TOKEN: 'authToken',
