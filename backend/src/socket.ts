@@ -1,12 +1,14 @@
 import { Server } from 'socket.io';
+import { corsConfig } from './config/env.js';
 
 let io: Server;
 
 export const initializeSocket = (httpServer: any) => {
   io = new Server(httpServer, {
     cors: {
-      origin: 'http://localhost:5173',
+      origin: corsConfig.origin,
       methods: ['GET', 'POST'],
+      credentials: true,
     },
   });
   return io;
