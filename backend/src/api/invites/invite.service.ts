@@ -1,5 +1,6 @@
 import prisma from '../../config/prisma.js';
 import { getIO } from '../../socket.js';
+import type { Prisma, BoardMember as PrismaBoardMember } from '@prisma/client';
 
 const checkInvitePermission = async (inviterId: string, boardId: string) => {
   const isOwner = await prisma.board.findFirst({
@@ -89,9 +90,9 @@ export const createInvite = async (
   };
 
   // Criar convite PENDING (não adicionar diretamente)
-  const invite = await prisma.$transaction(async tx => {
+  const invite = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Verificar se já existe convite pendente
-    const existingInvite = await (tx as any).boardInvite.findFirst({
+    const existingInvite = await tx.boardInvite.findFirst({
       where: {
         boardId: boardId,
         email: email,
@@ -108,7 +109,7 @@ export const createInvite = async (
     }
 
     // Criar o convite
-    const newInvite = await (tx as any).boardInvite.create({
+    const newInvite = await tx.boardInvite.create({
       data: {
         boardId: boardId,
         email: email,
@@ -119,7 +120,7 @@ export const createInvite = async (
     });
 
     // Criar notificação para o usuário convidado
-    const notification = await (tx as any).notification.create({
+    const notification = await tx.notification.create({
       data: {
         type: 'BOARD_INVITE',
         title: `Convite para o board "${board.name}"`,
@@ -205,7 +206,7 @@ export const getBoardInvites = async (boardId: string, userId: string) => {
 
   const isOwner = board.ownerId === userId;
   const isAdmin = board.members.find(
-    m => m.userId === userId && m.role === 'ADMIN'
+    (m: PrismaBoardMember) => m.userId === userId && m.role === 'ADMIN'
   );
 
   if (!isOwner && !isAdmin) {
