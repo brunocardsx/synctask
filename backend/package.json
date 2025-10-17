@@ -10,7 +10,7 @@
     "dev:single": "tsx src/server.ts",
     "build": "tsc",
     "prestart": "prisma generate",
-    "start": "node dist/server.js",
+    "start": "node scripts/setup-db.js && node dist/server.js",
     "start:prod": "node scripts/setup-db.js && node dist/server.js",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
