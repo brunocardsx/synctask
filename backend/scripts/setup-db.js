@@ -10,25 +10,32 @@ async function setupDatabase() {
     await prisma.$connect();
     console.log('✅ Conexão com banco estabelecida');
 
-    // Verifica se as tabelas principais existem
-    const userCount = await prisma.user.count();
-    console.log(`📊 Tabela User existe com ${userCount} registros`);
-
-    const boardCount = await prisma.board.count();
-    console.log(`📊 Tabela Board existe com ${boardCount} registros`);
-
-    // Verifica se todas as tabelas necessárias existem
+    // Verifica se TODAS as tabelas do sistema existem
     const tablesToCheck = [
-      'user', 'board', 'boardMember', 'column', 'card', 'boardInvite', 'chatMessage', 'notification'
+      'User',           // Autenticação
+      'Board',          // Quadros
+      'BoardMember',    // Membros dos quadros
+      'Column',         // Colunas dos quadros
+      'Card',           // Cartões
+      'CardAssignee',   // Responsáveis pelos cartões
+      'Comment',        // Comentários nos cartões
+      'Activity',       // Atividades/logs
+      'PasswordReset',  // Reset de senha
+      'ChatMessage',    // Chat dos quadros
+      'BoardInvite',    // Convites para quadros
+      'Notification',   // Sistema de notificações
     ];
 
     let allTablesExist = true;
     for (const table of tablesToCheck) {
       try {
-        await prisma.$queryRaw`SELECT 1 FROM ${table} LIMIT 1`;
+        await prisma.$queryRaw`SELECT 1 FROM "${table}" LIMIT 1`;
         console.log(`✅ Tabela ${table} existe`);
       } catch (error) {
-        if (error.code === 'P2021' || error.message.includes('does not exist')) {
+        if (
+          error.code === 'P2021' ||
+          error.message.includes('does not exist')
+        ) {
           console.log(`❌ Tabela ${table} não existe`);
           allTablesExist = false;
         }
@@ -39,11 +46,22 @@ async function setupDatabase() {
       throw new Error('Algumas tabelas não existem');
     }
 
+    // Se chegou até aqui, mostra contagem das tabelas principais
+    const userCount = await prisma.user.count();
+    console.log(`📊 Tabela User tem ${userCount} registros`);
+
+    const boardCount = await prisma.board.count();
+    console.log(`📊 Tabela Board tem ${boardCount} registros`);
+
     console.log('✅ Banco de dados configurado corretamente');
   } catch (error) {
     console.error('❌ Erro ao verificar banco:', error);
 
-    if (error.code === 'P2021' || error.message.includes('does not exist') || error.message.includes('Algumas tabelas não existem')) {
+    if (
+      error.code === 'P2021' ||
+      error.message.includes('does not exist') ||
+      error.message.includes('Algumas tabelas não existem')
+    ) {
       console.log('🔧 Aplicando schema completo...');
       const { execSync } = await import('child_process');
 
@@ -53,13 +71,12 @@ async function setupDatabase() {
           stdio: 'inherit',
         });
         console.log('✅ Schema sincronizado com sucesso');
-        
+
         // Verifica novamente se tudo está funcionando
         console.log('🔍 Verificando tabelas após sincronização...');
         await prisma.$connect();
         const userCount = await prisma.user.count();
         console.log(`📊 Tabela User agora tem ${userCount} registros`);
-        
       } catch (pushError) {
         console.error('❌ Erro ao aplicar schema:', pushError);
         throw pushError;
