@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CardModal } from "../components/CardModal";
 import { Column } from "../components/Column";
+import { AddColumnButton } from "../components/AddColumnButton";
 import { MembersModal } from "../components/MembersModal";
 import { BoardMembers } from "../components/BoardMembers";
 import { BoardChat } from "../components/BoardChat";
@@ -20,7 +21,6 @@ import {
   Kanban,
   Users,
   MessageSquare,
-  Settings,
   ChevronLeft,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -382,6 +382,17 @@ export default function BoardPage() {
     });
   };
 
+  const handleColumnAdded = (newColumn: Column) => {
+    setBoard((currentBoard) => {
+      if (!currentBoard) return null;
+
+      return {
+        ...currentBoard,
+        columns: [...currentBoard.columns, { ...newColumn, cards: [] }],
+      };
+    });
+  };
+
   // Configuração do Socket
   useEffect(() => {
     if (socket) {
@@ -526,14 +537,20 @@ export default function BoardPage() {
                 ))}
 
                 {board.columns.length === 0 && (
-                  <div className="flex-1 text-center py-12">
-                    <div className="text-gray-400 text-lg">
-                      Nenhuma coluna criada ainda
-                    </div>
-                    <div className="text-gray-300 text-sm mt-2">
-                      Adicione colunas para começar a organizar suas tarefas
-                    </div>
+                  <div className="flex-1 flex items-center justify-center py-12">
+                    <AddColumnButton
+                      boardId={boardId!}
+                      onColumnAdded={handleColumnAdded}
+                    />
                   </div>
+                )}
+
+                {/* Botão para adicionar coluna quando já existem colunas */}
+                {board.columns.length > 0 && (
+                  <AddColumnButton
+                    boardId={boardId!}
+                    onColumnAdded={handleColumnAdded}
+                  />
                 )}
               </div>
             </DndContext>
