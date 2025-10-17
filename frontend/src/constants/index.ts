@@ -1,8 +1,24 @@
 // Constantes centralizadas para o frontend SyncTask
 // Seguindo diretrizes: evitar magic strings, nomes específicos
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api' as const;
-export const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001' as const;
+export const API_BASE_URL = (() => {
+  // Em desenvolvimento, usar localhost
+  if (import.meta.env.DEV) {
+    return "http://localhost:3001/api";
+  }
+  
+  // Em produção, usar Railway diretamente
+  return "https://synctask-production.up.railway.app/api";
+})() as const;
+export const SOCKET_URL = (() => {
+  // Em desenvolvimento, usar localhost
+  if (import.meta.env.DEV) {
+    return "http://localhost:3001";
+  }
+  
+  // Em produção, usar Railway diretamente
+  return "https://synctask-production.up.railway.app";
+})() as const;
 
 export const STORAGE_KEYS = {
     AUTH_TOKEN: 'authToken',
