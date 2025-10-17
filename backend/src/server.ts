@@ -1,6 +1,7 @@
 import { createServer } from 'http';
 import app from './app.js';
 import { initializeSocket } from './socket.js';
+import { createChatMessage } from './api/chat/chat.service.js';
 
 const httpServer = createServer(app);
 
@@ -39,32 +40,22 @@ io.on('connection', socket => {
         `💬 Recebendo mensagem no board ${data.boardId}: ${data.message}`
       );
 
-      // Criar objeto de mensagem com ID único
-      const messageWithId = {
-        id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        boardId: data.boardId,
-        userId: data.userId,
-        message: data.message,
-        createdAt: new Date().toISOString(),
-        user: {
-          id: data.userId,
-          name: data.userName || 'Usuário',
-          email: data.userEmail || 'email@exemplo.com',
-        },
-      };
+      const { boardId, userId, message } = data;
+      
+      if (!boardId || !userId || !message) {
+        socket.emit('chat_error', { message: 'Dados inválidos' });
+        return;
+      }
 
-      // Emitir mensagem para todos os membros do board (incluindo o remetente)
-      io.to(`board-${data.boardId}`).emit('chat_message', messageWithId);
-
+      const chatMessage = await createChatMessage(boardId, message, userId);
+      
       console.log(
-        `💬 Mensagem enviada no board ${data.boardId}: ${data.message}`
+        `💬 Mensagem persistida e enviada no board ${boardId}: ${message}`
       );
     } catch (error) {
       console.error('Erro ao processar mensagem de chat:', error);
-      // Emitir erro para o remetente específico
       socket.emit('chat_error', {
-        message: 'Erro ao enviar mensagem',
-        error: error instanceof Error ? error.message : 'Erro desconhecido',
+        message: error instanceof Error ? error.message : 'Erro interno do servidor',
       });
     }
   });
