@@ -6,21 +6,23 @@ const getSocketURL = (): string => {
   if (import.meta.env.DEV) {
     return "http://localhost:3001";
   }
-  
+
   // Em produção, usar a variável de ambiente ou fallback para Railway
-  return import.meta.env.VITE_API_URL || "https://synctask-production.up.railway.app";
+  const url = import.meta.env.VITE_API_URL || "https://synctask-production.up.railway.app";
+  console.log("Socket URL:", url);
+  return url;
 };
 
 let socketInstance: Socket | null = null;
 
 const createSocket = (): Socket => {
   const token = getAuthToken();
-  console.log(
-    "Socket: Criando conexão com token:",
-    token ? "✅ Presente" : "❌ Ausente"
-  );
+  const url = getSocketURL();
+  
+  console.log("Socket: Criando conexão com token:", token ? "✅ Presente" : "❌ Ausente");
+  console.log("Socket: URL:", url);
 
-  return io(getSocketURL(), {
+  return io(url, {
     autoConnect: false,
     transports: ["websocket", "polling"],
     timeout: 20000,

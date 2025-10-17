@@ -16,6 +16,9 @@ import {
 let io: Server;
 
 export const initializeSocket = (httpServer: any) => {
+  console.log("🔌 Inicializando Socket.IO...");
+  console.log("🔌 CORS origins:", corsConfig.origin);
+  
   io = new Server(httpServer, {
     cors: {
       origin: corsConfig.origin,
