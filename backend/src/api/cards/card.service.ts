@@ -33,11 +33,27 @@ const findColumnWithBoard = async (
   });
 };
 
-const checkUserPermission = (
-  column: { board: { ownerId: string } } | null,
+const checkUserPermission = async (
+  tx: Prisma.TransactionClient,
+  column: { board: { ownerId: string; id: string } } | null,
   userId: string
-): boolean => {
-  return Boolean(column && column.board.ownerId === userId);
+): Promise<boolean> => {
+  if (!column) return false;
+  
+  // Se é o owner, tem permissão
+  if (column.board.ownerId === userId) return true;
+  
+  // Verificar se é membro do board
+  const membership = await tx.boardMember.findUnique({
+    where: {
+      userId_boardId: {
+        userId: userId,
+        boardId: column.board.id,
+      },
+    },
+  });
+  
+  return Boolean(membership);
 };
 
 const getNextCardOrder = async (
@@ -50,9 +66,9 @@ const getNextCardOrder = async (
 };
 
 const emitCardCreatedEvent = (boardId: string, card: any) => {
-  getIO().to(boardId).emit(SOCKET_EVENTS.CARD_CREATED, card);
+  getIO().to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_CREATED, card);
   console.log(
-    `📡 Evento '${SOCKET_EVENTS.CARD_CREATED}' emitido para board ${boardId}`
+    `📡 Evento '${SOCKET_EVENTS.CARD_CREATED}' emitido para board-${boardId}`
   );
 };
 
@@ -69,7 +85,7 @@ export const createCard = async (
   return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const column = await findColumnWithBoard(tx, columnId);
 
-    if (!column || !checkUserPermission(column, userId)) {
+    if (!column || !(await checkUserPermission(tx, column, userId))) {
       return null;
     }
 
@@ -113,17 +129,33 @@ const findCardWithColumnAndBoard = async (
   });
 };
 
-const checkCardPermission = (
-  card: { column: { board: { ownerId: string } } } | null,
+const checkCardPermission = async (
+  tx: Prisma.TransactionClient,
+  card: { column: { board: { ownerId: string; id: string } } } | null,
   userId: string
-): boolean => {
-  return Boolean(card && card.column.board.ownerId === userId);
+): Promise<boolean> => {
+  if (!card) return false;
+  
+  // Se é o owner, tem permissão
+  if (card.column.board.ownerId === userId) return true;
+  
+  // Verificar se é membro do board
+  const membership = await tx.boardMember.findUnique({
+    where: {
+      userId_boardId: {
+        userId: userId,
+        boardId: card.column.board.id,
+      },
+    },
+  });
+  
+  return Boolean(membership);
 };
 
 const emitCardUpdatedEvent = (boardId: string, card: any) => {
-  getIO().to(boardId).emit(SOCKET_EVENTS.CARD_UPDATED, card);
+  getIO().to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_UPDATED, card);
   console.log(
-    `📡 Evento '${SOCKET_EVENTS.CARD_UPDATED}' emitido para board ${boardId}`
+    `📡 Evento '${SOCKET_EVENTS.CARD_UPDATED}' emitido para board-${boardId}`
   );
 };
 
@@ -140,7 +172,7 @@ export const updateCard = async (
   return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const card = await findCardWithColumnAndBoard(tx, cardId);
 
-    if (!card || !checkCardPermission(card, userId)) {
+    if (!card || !(await checkCardPermission(tx, card, userId))) {
       return null;
     }
 
@@ -163,9 +195,9 @@ const emitCardDeletedEvent = (
   cardId: string,
   columnId: string
 ) => {
-  getIO().to(boardId).emit(SOCKET_EVENTS.CARD_DELETED, { cardId, columnId });
+  getIO().to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_DELETED, { cardId, columnId });
   console.log(
-    `📡 Evento '${SOCKET_EVENTS.CARD_DELETED}' emitido para board ${boardId}`
+    `📡 Evento '${SOCKET_EVENTS.CARD_DELETED}' emitido para board-${boardId}`
   );
 };
 
@@ -193,7 +225,7 @@ export const deleteCard = async (cardId: string, userId: string) => {
   return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const card = await findCardWithColumnAndBoard(tx, cardId);
 
-    if (!card || !checkCardPermission(card, userId)) {
+    if (!card || !(await checkCardPermission(tx, card, userId))) {
       return null;
     }
 
@@ -234,7 +266,7 @@ const emitCardMovedEvent = (
   newOrder: number,
   card: unknown
 ) => {
-  getIO().to(boardId).emit(SOCKET_EVENTS.CARD_MOVED, {
+  getIO().to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_MOVED, {
     cardId,
     oldColumnId,
     newColumnId,
@@ -242,7 +274,7 @@ const emitCardMovedEvent = (
     card,
   });
   console.log(
-    `📡 Evento '${SOCKET_EVENTS.CARD_MOVED}' emitido para board ${boardId}`
+    `📡 Evento '${SOCKET_EVENTS.CARD_MOVED}' emitido para board-${boardId}`
   );
 };
 
@@ -307,7 +339,7 @@ export const moveCard = async (
   return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const card = await findCardWithColumnAndBoard(tx, cardId);
 
-    if (!card || !checkCardPermission(card, userId)) {
+    if (!card || !(await checkCardPermission(tx, card, userId))) {
       return null;
     }
 
@@ -346,7 +378,7 @@ export const getCard = async (cardId: string, userId: string) => {
   return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const card = await findCardWithColumnAndBoard(tx, cardId);
 
-    if (!checkCardPermission(card, userId)) {
+    if (!(await checkCardPermission(tx, card, userId))) {
       return null;
     }
 

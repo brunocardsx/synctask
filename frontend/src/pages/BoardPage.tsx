@@ -17,12 +17,7 @@ import { NotificationCenter } from "../components/NotificationCenter";
 import { useSocket } from "../hooks/useSocket";
 import { getUserData } from "../utils/storage";
 import apiClient from "../services/api";
-import {
-  Kanban,
-  Users,
-  MessageSquare,
-  ChevronLeft,
-} from "lucide-react";
+import { Kanban, Users, MessageSquare, ChevronLeft } from "lucide-react";
 import { Button } from "../components/ui/button";
 
 interface Card {
@@ -421,9 +416,59 @@ export default function BoardPage() {
         });
       });
 
-      socket.on("card:moved", (updatedCard) => {
-        console.log("Card movido:", updatedCard);
-        // TODO: Implementar atualização de card movido
+      socket.on("card:created", (newCard: Card) => {
+        console.log("Novo card criado:", newCard);
+        setBoard((currentBoard) => {
+          if (!currentBoard) return null;
+
+          const newColumns = currentBoard.columns.map((column) => {
+            if (column.id === newCard.columnId) {
+              return {
+                ...column,
+                cards: [...column.cards, newCard],
+              };
+            }
+            return column;
+          });
+
+          return { ...currentBoard, columns: newColumns };
+        });
+      });
+
+      socket.on("card:moved", (data: {
+        cardId: string;
+        oldColumnId: string;
+        newColumnId: string;
+        newOrder: number;
+        card: Card;
+      }) => {
+        console.log("Card movido:", data);
+        setBoard((currentBoard) => {
+          if (!currentBoard) return null;
+
+          const newColumns = currentBoard.columns.map((column) => {
+            // Remover card da coluna antiga
+            if (column.id === data.oldColumnId) {
+              return {
+                ...column,
+                cards: column.cards.filter((card) => card.id !== data.cardId),
+              };
+            }
+
+            // Adicionar card na nova coluna
+            if (column.id === data.newColumnId) {
+              const updatedCard = { ...data.card, columnId: data.newColumnId };
+              return {
+                ...column,
+                cards: [...column.cards, updatedCard],
+              };
+            }
+
+            return column;
+          });
+
+          return { ...currentBoard, columns: newColumns };
+        });
       });
 
       return () => {
