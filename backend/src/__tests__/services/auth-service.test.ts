@@ -120,6 +120,7 @@ describe('Auth Service', () => {
         refreshToken: 'mock-refresh-token',
         userId: mockUser.id,
         expiresIn: '15m',
+        userName: mockUser.name,
       });
     });
 

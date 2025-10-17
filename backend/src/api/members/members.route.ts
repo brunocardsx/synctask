@@ -6,7 +6,15 @@ const router = Router();
 
 router.post('/:boardId/members', isAuthenticated, membersController.addMember);
 router.get('/:boardId/members', isAuthenticated, membersController.getMembers);
-router.put('/:boardId/members/:userId', isAuthenticated, membersController.updateMemberRole);
-router.delete('/:boardId/members/:userId', isAuthenticated, membersController.removeMember);
+router.put(
+  '/:boardId/members/:userId',
+  isAuthenticated,
+  membersController.updateMemberRole
+);
+router.delete(
+  '/:boardId/members/:userId',
+  isAuthenticated,
+  membersController.removeMember
+);
 
 export default router;

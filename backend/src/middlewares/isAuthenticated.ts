@@ -13,15 +13,23 @@ declare global {
   }
 }
 
-const handleInvalidToken = (res: Response, message: string, requestId?: string) => {
+const handleInvalidToken = (
+  res: Response,
+  message: string,
+  requestId?: string
+) => {
   console.warn(`Authentication failed [${requestId}]: ${message}`);
-  return res.status(HTTP_STATUS.UNAUTHORIZED).json({ 
+  return res.status(HTTP_STATUS.UNAUTHORIZED).json({
     message,
-    requestId 
+    requestId,
   });
 };
 
-export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+export const isAuthenticated = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const authHeader = req.headers.authorization;
   const requestId = req.requestId;
 
@@ -37,12 +45,13 @@ export const isAuthenticated = (req: Request, res: Response, next: NextFunction)
   try {
     const payload = verifyAccessToken(token);
     req.userId = payload.userId;
-    
+
     // Log successful authentication
     console.log(`User authenticated [${requestId}]: ${payload.userId}`);
     next();
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.INVALID_TOKEN;
+    const errorMessage =
+      error instanceof Error ? error.message : ERROR_MESSAGES.INVALID_TOKEN;
     return handleInvalidToken(res, errorMessage, requestId);
   }
 };

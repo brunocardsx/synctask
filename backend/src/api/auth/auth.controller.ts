@@ -29,7 +29,7 @@ export const registerUser = async (req: Request, res: Response) => {
 
       return res.status(400).json({
         message: 'Dados de entrada inválidos.',
-        errors: errors,
+        errors,
       });
     }
 
@@ -70,7 +70,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
       return res.status(400).json({
         message: 'Dados de entrada inválidos.',
-        errors: errors,
+        errors,
       });
     }
 

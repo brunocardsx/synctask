@@ -83,7 +83,7 @@ export const createInvite = async (
       boardId: board.id,
       boardName: board.name,
       inviterName: board.owner.name,
-      role: role,
+      role,
     },
     read: false,
     createdAt: new Date().toISOString(),
@@ -95,8 +95,8 @@ export const createInvite = async (
       // Verificar se já existe convite pendente
       const existingInvite = await tx.boardInvite.findFirst({
         where: {
-          boardId: boardId,
-          email: email,
+          boardId,
+          email,
           status: 'PENDING',
         },
       });
@@ -112,11 +112,11 @@ export const createInvite = async (
       // Criar o convite
       const newInvite = await tx.boardInvite.create({
         data: {
-          boardId: boardId,
-          email: email,
-          role: role,
+          boardId,
+          email,
+          role,
           status: 'PENDING',
-          inviterId: inviterId,
+          inviterId,
         },
       });
 
@@ -131,7 +131,7 @@ export const createInvite = async (
             boardId: board.id,
             boardName: board.name,
             inviterName: board.owner.name,
-            role: role,
+            role,
           },
           userId: invitedUser.id,
         },
@@ -163,8 +163,8 @@ export const createInvite = async (
   // Notificar o owner/admin que o convite foi enviado
   io.to(`board-${boardId}`).emit('invite:sent', {
     inviteId: invite.invite.id,
-    email: email,
-    role: role,
+    email,
+    role,
     status: 'PENDING',
   });
 
@@ -267,7 +267,7 @@ export const acceptInvite = async (inviteId: string, userId: string) => {
       // Adicionar usuário ao board
       await tx.boardMember.create({
         data: {
-          userId: userId,
+          userId,
           boardId: invite.boardId,
           role: invite.role,
         },
@@ -299,7 +299,7 @@ export const acceptInvite = async (inviteId: string, userId: string) => {
   io.to(`board-${invite.boardId}`).emit('member:added', {
     boardId: invite.boardId,
     member: {
-      userId: userId,
+      userId,
       name: user.name,
       email: user.email,
       role: invite.role,

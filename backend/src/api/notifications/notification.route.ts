@@ -14,4 +14,3 @@ router.put(
 router.put('/read-all', isAuthenticated, notificationController.markAllAsRead);
 
 export default router;
-

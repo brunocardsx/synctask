@@ -19,7 +19,7 @@ export const createBoard = async (name: string, ownerId: string) => {
       const newBoard = await tx.board.create({
         data: {
           name,
-          ownerId: ownerId,
+          ownerId,
         },
       });
 
@@ -42,7 +42,7 @@ export const createBoard = async (name: string, ownerId: string) => {
 export const getBoardsByOwnerId = async (ownerId: string) => {
   const boards = await prisma.board.findMany({
     where: {
-      ownerId: ownerId,
+      ownerId,
     },
   });
   return boards;
@@ -71,8 +71,8 @@ export const getBoardsForUser = async (userId: string) => {
 export const getBoardByIdAndOwnerId = async (id: string, ownerId: string) => {
   const board = await prisma.board.findUnique({
     where: {
-      id: id,
-      ownerId: ownerId,
+      id,
+      ownerId,
     },
     include: {
       columns: {
@@ -96,7 +96,7 @@ export const getBoardById = async (id: string, userId: string) => {
   // Verificar se o usuário tem acesso ao board (owner ou membro)
   const board = await prisma.board.findUnique({
     where: {
-      id: id,
+      id,
     },
     include: {
       owner: {
@@ -156,8 +156,8 @@ export const updateBoard = async (
 ) => {
   const board = await prisma.board.findUnique({
     where: {
-      id: id,
-      ownerId: ownerId,
+      id,
+      ownerId,
     },
   });
 
@@ -167,10 +167,10 @@ export const updateBoard = async (
 
   const updatedBoard = await prisma.board.update({
     where: {
-      id: id,
+      id,
     },
     data: {
-      name: name,
+      name,
     },
   });
 
@@ -184,8 +184,8 @@ export const updateBoard = async (
 export const deleteBoard = async (id: string, ownerId: string) => {
   const board = await prisma.board.findUnique({
     where: {
-      id: id,
-      ownerId: ownerId,
+      id,
+      ownerId,
     },
   });
 
@@ -216,7 +216,7 @@ export const deleteBoard = async (id: string, ownerId: string) => {
 
     await tx.board.delete({
       where: {
-        id: id,
+        id,
       },
     });
   });

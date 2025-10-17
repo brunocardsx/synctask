@@ -1,14 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import * as chatService from './chat.service.js';
-
-const chatMessageSchema = z.object({
-  message: z.string().min(1).max(1000),
-});
-
-const boardParamsSchema = z.object({
-  boardId: z.string().uuid(),
-});
+import {
+  chatMessageSchema,
+  boardParamsSchema,
+} from '../../schemas/chatSchema.js';
 
 export const getChatMessages = async (
   req: Request,
@@ -84,4 +80,3 @@ export const sendChatMessage = async (
     next(error);
   }
 };
-

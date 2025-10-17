@@ -34,7 +34,7 @@ export const addMemberToBoard = async (
         where: {
           userId_boardId: {
             userId: addedByUserId,
-            boardId: boardId,
+            boardId,
           },
         },
       });
@@ -64,7 +64,7 @@ export const addMemberToBoard = async (
       where: {
         userId_boardId: {
           userId: userToAdd.id,
-          boardId: boardId,
+          boardId,
         },
       },
     });
@@ -79,7 +79,7 @@ export const addMemberToBoard = async (
     const boardMember = await tx.boardMember.create({
       data: {
         userId: userToAdd.id,
-        boardId: boardId,
+        boardId,
         role: role as 'ADMIN' | 'MEMBER',
       },
       include: {
@@ -97,7 +97,7 @@ export const addMemberToBoard = async (
     await tx.activity.create({
       data: {
         type: 'MEMBER_ADDED',
-        boardId: boardId,
+        boardId,
         userId: addedByUserId,
       },
     });
@@ -137,7 +137,7 @@ export const getBoardMembers = async (
       where: {
         userId_boardId: {
           userId: requesterUserId,
-          boardId: boardId,
+          boardId,
         },
       },
     });
@@ -199,7 +199,7 @@ export const updateMemberRole = async (
         where: {
           userId_boardId: {
             userId: updatedByUserId,
-            boardId: boardId,
+            boardId,
           },
         },
       });
@@ -218,7 +218,7 @@ export const updateMemberRole = async (
       where: {
         userId_boardId: {
           userId: memberUserId,
-          boardId: boardId,
+          boardId,
         },
       },
       include: {
@@ -243,7 +243,7 @@ export const updateMemberRole = async (
       where: {
         userId_boardId: {
           userId: memberUserId,
-          boardId: boardId,
+          boardId,
         },
       },
       data: {
@@ -264,7 +264,7 @@ export const updateMemberRole = async (
     await tx.activity.create({
       data: {
         type: 'MEMBER_ADDED',
-        boardId: boardId,
+        boardId,
         userId: updatedByUserId,
       },
     });
@@ -306,7 +306,7 @@ export const removeMemberFromBoard = async (
         where: {
           userId_boardId: {
             userId: removedByUserId,
-            boardId: boardId,
+            boardId,
           },
         },
       });
@@ -325,7 +325,7 @@ export const removeMemberFromBoard = async (
       where: {
         userId_boardId: {
           userId: memberUserId,
-          boardId: boardId,
+          boardId,
         },
       },
       include: {
@@ -350,7 +350,7 @@ export const removeMemberFromBoard = async (
       where: {
         userId_boardId: {
           userId: memberUserId,
-          boardId: boardId,
+          boardId,
         },
       },
     });
@@ -359,7 +359,7 @@ export const removeMemberFromBoard = async (
     await tx.activity.create({
       data: {
         type: 'MEMBER_ADDED',
-        boardId: boardId,
+        boardId,
         userId: removedByUserId,
       },
     });

@@ -101,3 +101,4 @@ export const expectSuccessResponse = (
   expect(res.status).toHaveBeenCalledWith(statusCode);
   expect(res.json).toHaveBeenCalledWith(data);
 };
+

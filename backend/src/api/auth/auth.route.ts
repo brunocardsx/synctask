@@ -10,7 +10,11 @@ router.post('/register', authController.registerUser);
 router.post('/login', authController.loginUser);
 
 // Password reset routes
-router.post('/forgot-password', passwordResetLimiter, passwordResetController.requestPasswordReset);
+router.post(
+  '/forgot-password',
+  passwordResetLimiter,
+  passwordResetController.requestPasswordReset
+);
 router.post('/reset-password', passwordResetController.confirmPasswordReset);
 router.post('/cleanup-tokens', passwordResetController.cleanupExpiredTokens);
 

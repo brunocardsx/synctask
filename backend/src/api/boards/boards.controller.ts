@@ -35,7 +35,7 @@ export const createBoard = async (req: Request, res: Response) => {
 
       return res.status(400).json({
         message: 'Dados de entrada inválidos.',
-        errors: errors,
+        errors,
       });
     }
 
@@ -128,7 +128,7 @@ export const updateBoard = async (req: Request, res: Response) => {
 
       return res.status(400).json({
         message: 'Invalid input data.',
-        errors: errors,
+        errors,
       });
     }
 

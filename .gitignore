@@ -55,7 +55,13 @@ docs/
 backend/docs/
 backend/GUIA_TESTES.md
 backend/README.md
+backend/TESTING.md
 frontend/README.md
+frontend/src/test/
+
+# Documentation files
+*.md
+!README.md
 
 # Development test files
 backend/test-*.js
@@ -66,3 +72,36 @@ backend/jest.config.simple.js
 # Development scripts and tools
 backend/scripts/
 scripts/
+
+# Build artifacts
+backend/dist/
+frontend/dist/
+*.map
+*.d.ts
+
+# Temporary files
+*.tmp
+*.temp
+.env.backup
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Seed files
+backend/prisma/seed.cjs
+backend/prisma/seed.js
+
+# UI components (generated)
+frontend/src/components/ui/
+
+# Performance tests
+backend/src/__tests__/performance/
+
+# Chat implementation docs
+CHAT_IMPLEMENTATION.md
+IMPLEMENTACAO_SISTEMA_CONVITES.md
+RESUMO_EXECUTIVO_CONVITES.md
+TEST_USERS.md
+CLAUDE.md
