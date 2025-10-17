@@ -1,6 +1,6 @@
 import prisma from '../../config/prisma.js';
 import { getIO } from '../../socket.js';
-import type { Prisma, BoardMember as PrismaBoardMember } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 const checkInvitePermission = async (inviterId: string, boardId: string) => {
   const isOwner = await prisma.board.findFirst({
@@ -90,54 +90,56 @@ export const createInvite = async (
   };
 
   // Criar convite PENDING (não adicionar diretamente)
-  const invite = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    // Verificar se já existe convite pendente
-    const existingInvite = await tx.boardInvite.findFirst({
-      where: {
-        boardId: boardId,
-        email: email,
-        status: 'PENDING',
-      },
-    });
-
-    if (existingInvite) {
-      const error = new Error(
-        'Já existe um convite pendente para este email'
-      ) as any;
-      error.statusCode = 409;
-      throw error;
-    }
-
-    // Criar o convite
-    const newInvite = await tx.boardInvite.create({
-      data: {
-        boardId: boardId,
-        email: email,
-        role: role,
-        status: 'PENDING',
-        inviterId: inviterId,
-      },
-    });
-
-    // Criar notificação para o usuário convidado
-    const notification = await tx.notification.create({
-      data: {
-        type: 'BOARD_INVITE',
-        title: `Convite para o board "${board.name}"`,
-        message: `${board.owner.name} convidou você para participar do board "${board.name}" como ${role === 'ADMIN' ? 'administrador' : 'membro'}.`,
-        data: {
-          inviteId: newInvite.id,
-          boardId: board.id,
-          boardName: board.name,
-          inviterName: board.owner.name,
-          role: role,
+  const invite = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      // Verificar se já existe convite pendente
+      const existingInvite = await tx.boardInvite.findFirst({
+        where: {
+          boardId: boardId,
+          email: email,
+          status: 'PENDING',
         },
-        userId: invitedUser.id,
-      },
-    });
+      });
 
-    return { invite: newInvite, notification };
-  });
+      if (existingInvite) {
+        const error = new Error(
+          'Já existe um convite pendente para este email'
+        ) as any;
+        error.statusCode = 409;
+        throw error;
+      }
+
+      // Criar o convite
+      const newInvite = await tx.boardInvite.create({
+        data: {
+          boardId: boardId,
+          email: email,
+          role: role,
+          status: 'PENDING',
+          inviterId: inviterId,
+        },
+      });
+
+      // Criar notificação para o usuário convidado
+      const notification = await tx.notification.create({
+        data: {
+          type: 'BOARD_INVITE',
+          title: `Convite para o board "${board.name}"`,
+          message: `${board.owner.name} convidou você para participar do board "${board.name}" como ${role === 'ADMIN' ? 'administrador' : 'membro'}.`,
+          data: {
+            inviteId: newInvite.id,
+            boardId: board.id,
+            boardName: board.name,
+            inviterName: board.owner.name,
+            role: role,
+          },
+          userId: invitedUser.id,
+        },
+      });
+
+      return { invite: newInvite, notification };
+    }
+  );
 
   // Emitir eventos WebSocket
   const io = getIO();
@@ -206,7 +208,8 @@ export const getBoardInvites = async (boardId: string, userId: string) => {
 
   const isOwner = board.ownerId === userId;
   const isAdmin = board.members.find(
-    (m: PrismaBoardMember) => m.userId === userId && m.role === 'ADMIN'
+    (m: { userId: string; role: 'ADMIN' | 'MEMBER' }) =>
+      m.userId === userId && m.role === 'ADMIN'
   );
 
   if (!isOwner && !isAdmin) {
@@ -253,41 +256,43 @@ export const acceptInvite = async (inviteId: string, userId: string) => {
   }
 
   // Aceitar o convite e adicionar o usuário ao board
-  const result = await prisma.$transaction(async tx => {
-    // Atualizar status do convite
-    await tx.boardInvite.update({
-      where: { id: inviteId },
-      data: { status: 'ACCEPTED' },
-    });
+  const result = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      // Atualizar status do convite
+      await tx.boardInvite.update({
+        where: { id: inviteId },
+        data: { status: 'ACCEPTED' },
+      });
 
-    // Adicionar usuário ao board
-    await tx.boardMember.create({
-      data: {
-        userId: userId,
-        boardId: invite.boardId,
-        role: invite.role,
-      },
-    });
-
-    // Criar notificação para o board
-    await tx.notification.create({
-      data: {
-        type: 'MEMBER_ADDED',
-        title: `Novo membro adicionado`,
-        message: `${user.name} aceitou o convite e foi adicionado ao board "${invite.board.name}".`,
+      // Adicionar usuário ao board
+      await tx.boardMember.create({
         data: {
+          userId: userId,
           boardId: invite.boardId,
-          boardName: invite.board.name,
-          memberName: user.name,
-          memberEmail: user.email,
           role: invite.role,
         },
-        userId: invite.inviterId,
-      },
-    });
+      });
 
-    return { boardId: invite.boardId, boardName: invite.board.name };
-  });
+      // Criar notificação para o board
+      await tx.notification.create({
+        data: {
+          type: 'MEMBER_ADDED',
+          title: `Novo membro adicionado`,
+          message: `${user.name} aceitou o convite e foi adicionado ao board "${invite.board.name}".`,
+          data: {
+            boardId: invite.boardId,
+            boardName: invite.board.name,
+            memberName: user.name,
+            memberEmail: user.email,
+            role: invite.role,
+          },
+          userId: invite.inviterId,
+        },
+      });
+
+      return { boardId: invite.boardId, boardName: invite.board.name };
+    }
+  );
 
   // Emitir eventos WebSocket
   const io = getIO();
@@ -371,13 +376,23 @@ export const getPendingInvites = async (userId: string) => {
     orderBy: { createdAt: 'desc' },
   });
 
-  return invites.map(invite => ({
-    id: invite.id,
-    email: invite.email,
-    role: invite.role,
-    status: invite.status,
-    createdAt: invite.createdAt,
-    board: invite.board,
-    inviter: invite.inviter,
-  }));
+  return invites.map(
+    (invite: {
+      id: string;
+      email: string;
+      role: 'ADMIN' | 'MEMBER';
+      status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
+      createdAt: Date;
+      board: { id: string; name: string };
+      inviter: { id: string; name: string; email: string };
+    }) => ({
+      id: invite.id,
+      email: invite.email,
+      role: invite.role,
+      status: invite.status,
+      createdAt: invite.createdAt,
+      board: invite.board,
+      inviter: invite.inviter,
+    })
+  );
 };

@@ -1,15 +1,19 @@
 import prisma from '../../config/prisma.js';
-import { AddMemberData, UpdateMemberRoleData } from '../../schemas/memberSchema.js';
+import type { Prisma } from '@prisma/client';
+import {
+  AddMemberData,
+  UpdateMemberRoleData,
+} from '../../schemas/memberSchema.js';
 import { getIO } from '../../socket.js';
 
 export const addMemberToBoard = async (
-  boardId: string, 
-  memberData: AddMemberData, 
+  boardId: string,
+  memberData: AddMemberData,
   addedByUserId: string
 ) => {
   const { email, role } = memberData;
 
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Verificar se o board existe e se o usuário é o owner
     const board = await tx.board.findUnique({
       where: { id: boardId },
@@ -23,7 +27,7 @@ export const addMemberToBoard = async (
 
     // Verificar se o usuário é o owner do board
     const isOwner = board.ownerId === addedByUserId;
-    
+
     // Se não for owner, verificar se é admin
     if (!isOwner) {
       const requesterMembership = await tx.boardMember.findUnique({
@@ -36,7 +40,9 @@ export const addMemberToBoard = async (
       });
 
       if (!requesterMembership || requesterMembership.role !== 'ADMIN') {
-        const error = new Error('Apenas o proprietário do board ou administradores podem adicionar membros.') as any;
+        const error = new Error(
+          'Apenas o proprietário do board ou administradores podem adicionar membros.'
+        ) as any;
         error.statusCode = 403;
         throw error;
       }
@@ -98,16 +104,19 @@ export const addMemberToBoard = async (
 
     // Emitir evento WebSocket
     const io = getIO();
-    io.to(`board-${boardId}`).emit('memberAdded', { 
-      boardId, 
-      member: boardMember 
+    io.to(`board-${boardId}`).emit('memberAdded', {
+      boardId,
+      member: boardMember,
     });
 
     return boardMember;
   });
 };
 
-export const getBoardMembers = async (boardId: string, requesterUserId: string) => {
+export const getBoardMembers = async (
+  boardId: string,
+  requesterUserId: string
+) => {
   // Verificar se o board existe e se o usuário é o owner
   const board = await prisma.board.findUnique({
     where: { id: boardId },
@@ -121,7 +130,7 @@ export const getBoardMembers = async (boardId: string, requesterUserId: string) 
 
   // Verificar se o usuário é o owner do board
   const isOwner = board.ownerId === requesterUserId;
-  
+
   // Se não for owner, verificar se é membro
   if (!isOwner) {
     const requesterMembership = await prisma.boardMember.findUnique({
@@ -134,7 +143,9 @@ export const getBoardMembers = async (boardId: string, requesterUserId: string) 
     });
 
     if (!requesterMembership) {
-      const error = new Error('Você não tem permissão para ver os membros deste board.') as any;
+      const error = new Error(
+        'Você não tem permissão para ver os membros deste board.'
+      ) as any;
       error.statusCode = 403;
       throw error;
     }
@@ -167,7 +178,7 @@ export const updateMemberRole = async (
   newRole: 'ADMIN' | 'MEMBER',
   updatedByUserId: string
 ) => {
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Verificar se o board existe e se o usuário é o owner
     const board = await tx.board.findUnique({
       where: { id: boardId },
@@ -181,7 +192,7 @@ export const updateMemberRole = async (
 
     // Verificar se o usuário é o owner do board
     const isOwner = board.ownerId === updatedByUserId;
-    
+
     // Se não for owner, verificar se é admin
     if (!isOwner) {
       const requesterMembership = await tx.boardMember.findUnique({
@@ -194,7 +205,9 @@ export const updateMemberRole = async (
       });
 
       if (!requesterMembership || requesterMembership.role !== 'ADMIN') {
-        const error = new Error('Apenas o proprietário do board ou administradores podem alterar roles de membros.') as any;
+        const error = new Error(
+          'Apenas o proprietário do board ou administradores podem alterar roles de membros.'
+        ) as any;
         error.statusCode = 403;
         throw error;
       }
@@ -258,9 +271,9 @@ export const updateMemberRole = async (
 
     // Emitir evento WebSocket
     const io = getIO();
-    io.to(`board-${boardId}`).emit('memberRoleUpdated', { 
-      boardId, 
-      member: updatedMember 
+    io.to(`board-${boardId}`).emit('memberRoleUpdated', {
+      boardId,
+      member: updatedMember,
     });
 
     return updatedMember;
@@ -272,7 +285,7 @@ export const removeMemberFromBoard = async (
   memberUserId: string,
   removedByUserId: string
 ) => {
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // Verificar se o board existe e se o usuário é o owner
     const board = await tx.board.findUnique({
       where: { id: boardId },
@@ -286,7 +299,7 @@ export const removeMemberFromBoard = async (
 
     // Verificar se o usuário é o owner do board
     const isOwner = board.ownerId === removedByUserId;
-    
+
     // Se não for owner, verificar se é admin
     if (!isOwner) {
       const requesterMembership = await tx.boardMember.findUnique({
@@ -299,7 +312,9 @@ export const removeMemberFromBoard = async (
       });
 
       if (!requesterMembership || requesterMembership.role !== 'ADMIN') {
-        const error = new Error('Apenas o proprietário do board ou administradores podem remover membros.') as any;
+        const error = new Error(
+          'Apenas o proprietário do board ou administradores podem remover membros.'
+        ) as any;
         error.statusCode = 403;
         throw error;
       }
@@ -330,7 +345,6 @@ export const removeMemberFromBoard = async (
       throw error;
     }
 
-
     // Remover membro
     await tx.boardMember.delete({
       where: {
@@ -352,10 +366,10 @@ export const removeMemberFromBoard = async (
 
     // Emitir evento WebSocket
     const io = getIO();
-    io.to(`board-${boardId}`).emit('memberRemoved', { 
-      boardId, 
+    io.to(`board-${boardId}`).emit('memberRemoved', {
+      boardId,
       memberId: memberUserId,
-      memberName: memberToRemove.user.name
+      memberName: memberToRemove.user.name,
     });
 
     return { success: true };

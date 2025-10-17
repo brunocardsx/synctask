@@ -8,7 +8,11 @@ import {
 } from '../../schemas/memberSchema.js';
 import * as memberService from './members.service.js';
 
-export const addMember = async (req: Request, res: Response, next: NextFunction) => {
+export const addMember = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const validatedData = addMemberSchema.parse(req.body);
     const validatedParams = boardMembersParamsSchema.parse(req.params);
@@ -43,7 +47,11 @@ export const addMember = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-export const getMembers = async (req: Request, res: Response, next: NextFunction) => {
+export const getMembers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const validatedParams = boardMembersParamsSchema.parse(req.params);
     const userId = req.userId;
@@ -52,7 +60,10 @@ export const getMembers = async (req: Request, res: Response, next: NextFunction
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const members = await memberService.getBoardMembers(validatedParams.boardId, userId);
+    const members = await memberService.getBoardMembers(
+      validatedParams.boardId,
+      userId
+    );
 
     return res.status(200).json(members);
   } catch (error) {
@@ -73,7 +84,11 @@ export const getMembers = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export const updateMemberRole = async (req: Request, res: Response, next: NextFunction) => {
+export const updateMemberRole = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const validatedData = updateMemberRoleSchema.parse(req.body);
     const validatedParams = memberParamsSchema.parse(req.params);
@@ -109,10 +124,19 @@ export const updateMemberRole = async (req: Request, res: Response, next: NextFu
   }
 };
 
-export const removeMember = async (req: Request, res: Response, next: NextFunction) => {
+export const removeMember = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const validatedParams = memberParamsSchema.parse(req.params);
     const removedByUserId = req.userId;
+
+    console.log('🔍 Debug removeMember:');
+    console.log('- boardId:', validatedParams.boardId);
+    console.log('- userId to remove:', validatedParams.userId);
+    console.log('- removedByUserId:', removedByUserId);
 
     if (!removedByUserId) {
       return res.status(401).json({ message: 'Unauthorized' });

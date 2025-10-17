@@ -88,6 +88,8 @@ export const loginUser = async (loginData: z.infer<typeof loginSchema>) => {
     return {
       accessToken,
       refreshToken,
+      userId: user.id,
+      userName: user.name,
       expiresIn: securityConfig.jwtExpiresIn,
     };
   } catch (error) {

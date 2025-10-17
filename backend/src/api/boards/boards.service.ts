@@ -1,5 +1,5 @@
 import prisma from '../../config/prisma.js';
-import type { Prisma, BoardMember as PrismaBoardMember } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { getIO } from '../../socket.js';
 
 export const createBoard = async (name: string, ownerId: string) => {
@@ -14,25 +14,27 @@ export const createBoard = async (name: string, ownerId: string) => {
   }
 
   // Criar board e adicionar owner como membro ADMIN automaticamente
-  const board = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const newBoard = await tx.board.create({
-      data: {
-        name,
-        ownerId: ownerId,
-      },
-    });
+  const board = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      const newBoard = await tx.board.create({
+        data: {
+          name,
+          ownerId: ownerId,
+        },
+      });
 
-    // Adicionar o owner como membro ADMIN
-    await tx.boardMember.create({
-      data: {
-        userId: ownerId,
-        boardId: newBoard.id,
-        role: 'ADMIN',
-      },
-    });
+      // Adicionar o owner como membro ADMIN
+      await tx.boardMember.create({
+        data: {
+          userId: ownerId,
+          boardId: newBoard.id,
+          role: 'ADMIN',
+        },
+      });
 
-    return newBoard;
-  });
+      return newBoard;
+    }
+  );
 
   return board;
 };
@@ -136,7 +138,9 @@ export const getBoardById = async (id: string, userId: string) => {
 
   // Verificar se o usuário tem acesso
   const isOwner = board.ownerId === userId;
-  const isMember = board.members.some((member: PrismaBoardMember) => member.userId === userId);
+  const isMember = board.members.some(
+    (member: { userId: string }) => member.userId === userId
+  );
 
   if (!isOwner && !isMember) {
     return null; // Usuário não tem acesso
