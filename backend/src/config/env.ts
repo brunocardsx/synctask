@@ -18,7 +18,7 @@ const envSchema = z.object({
     .min(32, 'JWT_REFRESH_SECRET deve ter pelo menos 32 caracteres'),
   JWT_EXPIRES_IN: z.string().default('1d'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
-  
+
   // Chat Encryption
   CHAT_ENCRYPTION_KEY: z
     .string()
