@@ -89,7 +89,13 @@ export const securityConfig = {
 export const corsConfig = {
   origin: env.ALLOWED_ORIGINS
     ? env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-    : [env.FRONTEND_URL, 'http://localhost:3000', 'http://localhost:5173'],
+    : [
+        env.FRONTEND_URL, 
+        'http://localhost:3000', 
+        'http://localhost:5173',
+        'https://synctask-production.up.railway.app',
+        'https://synctask-sepia.vercel.app'
+      ],
   credentials: true,
   optionsSuccessStatus: 200,
 };

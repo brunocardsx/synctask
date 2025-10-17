@@ -12,18 +12,18 @@ async function setupDatabase() {
 
     // Verifica se TODAS as tabelas do sistema existem
     const tablesToCheck = [
-      'User',           // Autenticação
-      'Board',          // Quadros
-      'BoardMember',    // Membros dos quadros
-      'Column',         // Colunas dos quadros
-      'Card',           // Cartões
-      'CardAssignee',   // Responsáveis pelos cartões
-      'Comment',        // Comentários nos cartões
-      'Activity',       // Atividades/logs
-      'PasswordReset',  // Reset de senha
-      'ChatMessage',    // Chat dos quadros
-      'BoardInvite',    // Convites para quadros
-      'Notification',   // Sistema de notificações
+      'User', // Autenticação
+      'Board', // Quadros
+      'BoardMember', // Membros dos quadros
+      'Column', // Colunas dos quadros
+      'Card', // Cartões
+      'CardAssignee', // Responsáveis pelos cartões
+      'Comment', // Comentários nos cartões
+      'Activity', // Atividades/logs
+      'PasswordReset', // Reset de senha
+      'ChatMessage', // Chat dos quadros
+      'BoardInvite', // Convites para quadros
+      'Notification', // Sistema de notificações
     ];
 
     let allTablesExist = true;
@@ -43,25 +43,6 @@ async function setupDatabase() {
     }
 
     if (!allTablesExist) {
-      throw new Error('Algumas tabelas não existem');
-    }
-
-    // Se chegou até aqui, mostra contagem das tabelas principais
-    const userCount = await prisma.user.count();
-    console.log(`📊 Tabela User tem ${userCount} registros`);
-
-    const boardCount = await prisma.board.count();
-    console.log(`📊 Tabela Board tem ${boardCount} registros`);
-
-    console.log('✅ Banco de dados configurado corretamente');
-  } catch (error) {
-    console.error('❌ Erro ao verificar banco:', error);
-
-    if (
-      error.code === 'P2021' ||
-      error.message.includes('does not exist') ||
-      error.message.includes('Algumas tabelas não existem')
-    ) {
       console.log('🔧 Aplicando schema completo...');
       const { execSync } = await import('child_process');
 
@@ -82,8 +63,18 @@ async function setupDatabase() {
         throw pushError;
       }
     } else {
-      throw error;
+      // Se todas as tabelas existem, mostra contagem
+      const userCount = await prisma.user.count();
+      console.log(`📊 Tabela User tem ${userCount} registros`);
+
+      const boardCount = await prisma.board.count();
+      console.log(`📊 Tabela Board tem ${boardCount} registros`);
+
+      console.log('✅ Banco de dados configurado corretamente');
     }
+  } catch (error) {
+    console.error('❌ Erro ao verificar banco:', error);
+    throw error;
   } finally {
     await prisma.$disconnect();
   }

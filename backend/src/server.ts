@@ -104,7 +104,10 @@ io.on('connection', socket => {
 const PORT = process.env.PORT || 3001;
 
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+  const serverUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://synctask-production.up.railway.app'
+    : `http://localhost:${PORT}`;
+  console.log(`🚀 Servidor rodando em ${serverUrl}`);
 });
 
 httpServer.on('error', err => {

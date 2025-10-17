@@ -7,10 +7,8 @@ const getSocketURL = (): string => {
     return "http://localhost:3001";
   }
 
-  // Em produção, usar a variável de ambiente ou fallback para Railway
-  const url = import.meta.env.VITE_API_URL || "https://synctask-production.up.railway.app";
-  console.log("Socket URL:", url);
-  return url;
+  // Em produção, usar Railway diretamente
+  return "https://synctask-production.up.railway.app";
 };
 
 let socketInstance: Socket | null = null;
@@ -18,8 +16,11 @@ let socketInstance: Socket | null = null;
 const createSocket = (): Socket => {
   const token = getAuthToken();
   const url = getSocketURL();
-  
-  console.log("Socket: Criando conexão com token:", token ? "✅ Presente" : "❌ Ausente");
+
+  console.log(
+    "Socket: Criando conexão com token:",
+    token ? "✅ Presente" : "❌ Ausente"
+  );
   console.log("Socket: URL:", url);
 
   return io(url, {
