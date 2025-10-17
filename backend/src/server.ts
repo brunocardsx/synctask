@@ -22,6 +22,8 @@ io.on('connection', socket => {
   socket.on('join_board', boardId => {
     socket.join(`board-${boardId}`);
     console.log(`🔌 Cliente ${socket.id} entrou na sala do board: ${boardId}`);
+    // Confirmar entrada na sala
+    socket.emit('joined_board', { boardId });
   });
 
   socket.on('join_board_chat', boardId => {
@@ -104,9 +106,10 @@ io.on('connection', socket => {
 const PORT = process.env.PORT || 3001;
 
 httpServer.listen(PORT, () => {
-  const serverUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://synctask-production.up.railway.app'
-    : `http://localhost:${PORT}`;
+  const serverUrl =
+    process.env.NODE_ENV === 'production'
+      ? 'https://synctask-production.up.railway.app'
+      : `http://localhost:${PORT}`;
   console.log(`🚀 Servidor rodando em ${serverUrl}`);
 });
 
