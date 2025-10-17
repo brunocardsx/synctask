@@ -11,7 +11,7 @@
     "build": "tsc",
     "prestart": "prisma generate",
     "start": "node dist/server.js",
-    "start:prod": "prisma migrate deploy && node dist/server.js",
+    "start:prod": "node scripts/setup-db.js && node dist/server.js",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "test": "jest",
