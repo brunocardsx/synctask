@@ -41,21 +41,22 @@ io.on('connection', socket => {
       );
 
       const { boardId, userId, message } = data;
-      
+
       if (!boardId || !userId || !message) {
         socket.emit('chat_error', { message: 'Dados inválidos' });
         return;
       }
 
-      const chatMessage = await createChatMessage(boardId, message, userId);
-      
+      await createChatMessage(boardId, message, userId);
+
       console.log(
         `💬 Mensagem persistida e enviada no board ${boardId}: ${message}`
       );
     } catch (error) {
       console.error('Erro ao processar mensagem de chat:', error);
       socket.emit('chat_error', {
-        message: error instanceof Error ? error.message : 'Erro interno do servidor',
+        message:
+          error instanceof Error ? error.message : 'Erro interno do servidor',
       });
     }
   });

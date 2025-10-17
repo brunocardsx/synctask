@@ -11,22 +11,22 @@ export const getBoardChatMessages = async (
     where: { id: boardId },
     include: { members: true },
   });
-  
+
   if (!board) {
-    const error = new Error('Board não encontrado.') as any;
+    const error = new Error('Board não encontrado.') as Error & { statusCode: number };
     error.statusCode = 404;
     throw error;
   }
-  
+
   const isOwner = board.ownerId === requesterUserId;
   const isMember = board.members.some(
     (m: { userId: string }) => m.userId === requesterUserId
   );
-  
+
   if (!isOwner && !isMember) {
     const error = new Error(
       'Você não tem permissão para acessar o chat deste board.'
-    ) as any;
+    ) as Error & { statusCode: number };
     error.statusCode = 403;
     throw error;
   }
@@ -53,8 +53,8 @@ export const createChatMessage = async (
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const board = await tx.board.findUnique({ where: { id: boardId } });
     if (!board) {
-      const error = new Error('Board não encontrado.') as any;
-      (error as any).statusCode = 404;
+      const error = new Error('Board não encontrado.') as Error & { statusCode: number };
+      error.statusCode = 404;
       throw error;
     }
     const isOwner = board.ownerId === userId;
@@ -65,13 +65,13 @@ export const createChatMessage = async (
       if (!membership) {
         const error = new Error(
           'Você não tem permissão para enviar mensagens neste board.'
-        ) as any;
-        (error as any).statusCode = 403;
+        ) as Error & { statusCode: number };
+        error.statusCode = 403;
         throw error;
       }
     }
     const encryptedMessage = encryptMessage(message);
-    
+
     const chatMessage = await tx.chatMessage.create({
       data: { boardId, userId, message: encryptedMessage },
       include: { user: { select: { id: true, name: true, email: true } } },
@@ -79,13 +79,13 @@ export const createChatMessage = async (
     const io = getIO();
     const messageForSocket = {
       ...chatMessage,
-      message: message,
+      message,
     };
     io.to(`board-${boardId}`).emit('chat_message', messageForSocket);
-    
+
     return {
       ...chatMessage,
-      message: message,
+      message,
     };
   });
 };
