@@ -7,7 +7,6 @@ import { Card } from './Card';
 interface ColumnProps {
   column: ColumnType;
   onCardClick: (card: CardType) => void;
-  onCardAdded: (card: CardType) => void;
 }
 
 const createColumnClassName = () =>
@@ -36,7 +35,7 @@ const renderCards = (cards: CardType[], onCardClick: (card: CardType) => void) =
   ));
 };
 
-export function Column({ column, onCardClick, onCardAdded }: ColumnProps) {
+export function Column({ column, onCardClick }: ColumnProps) {
   const { setNodeRef } = useDroppable({
     id: column.id,
   });
@@ -56,7 +55,6 @@ export function Column({ column, onCardClick, onCardAdded }: ColumnProps) {
 
         <AddCardButton
           columnId={column.id}
-          onCardAdded={onCardAdded}
         />
       </div>
     </div>

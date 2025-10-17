@@ -243,29 +243,6 @@ export default function BoardPage() {
 
       return { ...currentBoard, columns: newColumns };
     });
-
-    // Emitir evento de movimento de card entre colunas via WebSocket
-    if (socket) {
-      const cardToMove = activeColumn.cards.find(
-        (card) => card.id === activeId
-      );
-      if (cardToMove) {
-        console.log("Emitindo card:moved entre colunas:", {
-          cardId: activeId,
-          fromColumnId: activeColumn.id,
-          toColumnId: overColumn.id,
-          newOrder: overColumn.cards.length,
-          boardId: boardId,
-        });
-        socket.emit("card:moved", {
-          cardId: activeId,
-          fromColumnId: activeColumn.id,
-          toColumnId: overColumn.id,
-          newOrder: overColumn.cards.length,
-          boardId: boardId,
-        });
-      }
-    }
   };
 
   // Função para lidar com o fim do drag
@@ -314,28 +291,58 @@ export default function BoardPage() {
 
     console.log("Drag ended:", { activeId, overId });
 
-    // Emitir evento de movimento de card via WebSocket
+    // Emitir evento de movimento de card via WebSocket apenas se houve movimento real
     if (socket) {
       const cardToMove = activeColumn.cards.find(
         (card) => card.id === activeId
       );
+      
       if (cardToMove) {
-        console.log("Emitindo card:moved dentro da coluna:", {
-          cardId: activeId,
-          fromColumnId: activeColumn.id,
-          toColumnId: overId.startsWith("column-") ? overId : activeColumn.id,
-          newOrder:
-            overCardIndex !== -1 ? overCardIndex : activeColumn.cards.length,
-          boardId: boardId,
-        });
-        socket.emit("card:moved", {
-          cardId: activeId,
-          fromColumnId: activeColumn.id,
-          toColumnId: overId.startsWith("column-") ? overId : activeColumn.id,
-          newOrder:
-            overCardIndex !== -1 ? overCardIndex : activeColumn.cards.length,
-          boardId: boardId,
-        });
+        // Determinar se houve movimento real
+        let shouldEmit = false;
+        let fromColumnId = activeColumn.id;
+        let toColumnId = activeColumn.id;
+        let newOrder = activeCardIndex;
+
+        // Se está movendo para outra coluna
+        if (overId.startsWith("column-")) {
+          const targetColumnId = overId.replace("column-", "");
+          const targetColumn = board.columns.find(col => col.id === targetColumnId);
+          
+          if (targetColumn && targetColumn.id !== activeColumn.id) {
+            shouldEmit = true;
+            fromColumnId = activeColumn.id;
+            toColumnId = targetColumn.id;
+            newOrder = targetColumn.cards.length;
+          }
+        }
+        // Se está reordenando dentro da mesma coluna
+        else if (overCardIndex !== -1 && overCardIndex !== activeCardIndex) {
+          shouldEmit = true;
+          fromColumnId = activeColumn.id;
+          toColumnId = activeColumn.id;
+          newOrder = overCardIndex;
+        }
+
+        if (shouldEmit) {
+          console.log("Emitindo card:moved:", {
+            cardId: activeId,
+            fromColumnId,
+            toColumnId,
+            newOrder,
+            boardId: boardId,
+          });
+          
+          socket.emit("card:moved", {
+            cardId: activeId,
+            fromColumnId,
+            toColumnId,
+            newOrder,
+            boardId: boardId,
+          });
+        } else {
+          console.log("Movimento ignorado - sem mudança real");
+        }
       }
     }
   };
@@ -371,35 +378,6 @@ export default function BoardPage() {
       }));
 
       return { ...currentBoard, columns: newColumns };
-    });
-  };
-
-  const handleCardAdded = (newCard: Card) => {
-    setBoard((currentBoard) => {
-      if (!currentBoard) return null;
-
-      const newColumns = currentBoard.columns.map((column) => {
-        if (column.id === newCard.columnId) {
-          return {
-            ...column,
-            cards: [...column.cards, newCard],
-          };
-        }
-        return column;
-      });
-
-      return { ...currentBoard, columns: newColumns };
-    });
-  };
-
-  const handleColumnAdded = (newColumn: Column) => {
-    setBoard((currentBoard) => {
-      if (!currentBoard) return null;
-
-      return {
-        ...currentBoard,
-        columns: [...currentBoard.columns, { ...newColumn, cards: [] }],
-      };
     });
   };
 
@@ -471,12 +449,12 @@ export default function BoardPage() {
       socket.on(
         "card:moved",
         (data: {
-          cardId: string;
-          oldColumnId: string;
-          newColumnId: string;
-          newOrder: number;
+        cardId: string;
+        oldColumnId: string;
+        newColumnId: string;
+        newOrder: number;
           movedBy: string;
-        }) => {
+      }) => {
           console.log("Card movido via WebSocket:", data);
           
           // Ignorar se o movimento veio do próprio usuário
@@ -485,18 +463,16 @@ export default function BoardPage() {
             return;
           }
 
-          setBoard((currentBoard) => {
-            if (!currentBoard) return null;
+        setBoard((currentBoard) => {
+          if (!currentBoard) return null;
 
             // Encontrar o card original primeiro
             let originalCard: Card | null = null;
-            let sourceColumn: Column | null = null;
             
             for (const column of currentBoard.columns) {
               const foundCard = column.cards.find(card => card.id === data.cardId);
               if (foundCard) {
                 originalCard = foundCard;
-                sourceColumn = column;
                 break;
               }
             }
@@ -507,8 +483,8 @@ export default function BoardPage() {
             }
 
             const newColumns = currentBoard.columns.map((column) => {
-              // Remover card da coluna antiga
-              if (column.id === data.oldColumnId) {
+              // Remover card da coluna onde ele está atualmente (não necessariamente oldColumnId)
+              if (column.cards.some(card => card.id === data.cardId)) {
                 return {
                   ...column,
                   cards: column.cards.filter((card) => card.id !== data.cardId),
@@ -517,7 +493,7 @@ export default function BoardPage() {
 
               // Adicionar card na nova coluna
               if (column.id === data.newColumnId) {
-                const updatedCard = {
+                const updatedCard: Card = {
                   ...originalCard,
                   columnId: data.newColumnId,
                 };
@@ -531,7 +507,7 @@ export default function BoardPage() {
                   cards: newCards,
                 };
               }
-              
+
               return column;
             });
 
@@ -646,7 +622,6 @@ export default function BoardPage() {
                     key={column.id}
                     column={column}
                     onCardClick={handleCardClick}
-                    onCardAdded={handleCardAdded}
                   />
                 ))}
 
@@ -654,7 +629,6 @@ export default function BoardPage() {
                   <div className="flex-1 flex items-center justify-center py-12">
                     <AddColumnButton
                       boardId={boardId!}
-                      onColumnAdded={handleColumnAdded}
                     />
                   </div>
                 )}
@@ -663,7 +637,6 @@ export default function BoardPage() {
                 {board.columns.length > 0 && (
                   <AddColumnButton
                     boardId={boardId!}
-                    onColumnAdded={handleColumnAdded}
                   />
                 )}
               </div>

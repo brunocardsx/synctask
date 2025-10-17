@@ -5,7 +5,6 @@ import { isValidString } from "../utils/validation.js";
 
 interface AddCardButtonProps {
   columnId: string;
-  onCardAdded: (card: Card) => void;
 }
 
 const createFormClassName = () =>
@@ -51,7 +50,6 @@ const handleCardCreation = async (
   columnId: string,
   title: string,
   description: string,
-  onCardAdded: (card: Card) => void,
   setIsLoading: (loading: boolean) => void,
   setTitle: (title: string) => void,
   setDescription: (description: string) => void,
@@ -61,8 +59,8 @@ const handleCardCreation = async (
 
   setIsLoading(true);
   try {
-    const newCard = await createCard(columnId, title, description);
-    onCardAdded(newCard);
+    await createCard(columnId, title, description);
+    // Não chamar onCardAdded aqui - o WebSocket vai adicionar quando receber a confirmação
     setTitle("");
     setDescription("");
     setIsFormVisible(false);
@@ -146,7 +144,6 @@ export function AddCardButton({ columnId, onCardAdded }: AddCardButtonProps) {
       columnId,
       title,
       description,
-      onCardAdded,
       setIsLoading,
       setTitle,
       setDescription,
