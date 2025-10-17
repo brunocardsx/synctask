@@ -1,6 +1,9 @@
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
-const URL = 'http://localhost:3001';
+const URL = "http://localhost:3001";
 
-// Instância global do socket com conexão manual
-export const socket = io(URL, { autoConnect: false });
+// Instância global do socket com conexão automática
+export const socket = io(URL, {
+  autoConnect: true,
+  transports: ["websocket", "polling"],
+});

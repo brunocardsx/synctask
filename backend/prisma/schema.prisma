@@ -31,7 +31,6 @@ enum ActivityType {
   COMMENT_ADDED
 }
 
-
 // Modelo provisório do banco de dados
 
 model User {
@@ -44,12 +43,15 @@ model User {
   updatedAt    DateTime @updatedAt
 
   // Relacionamentos
-  memberships     BoardMember[]     // quadros dos quais o usuário é membro
-  assignedCards   CardAssignee[]    // cartões pelo qual o usuário é responsável
-  comments        Comment[]         // comentários feitos pelo usuário
-  activities      Activity[]        // atividades realizada pelos usuários
-  ownedBoards     Board[]          // Added this line for the inverse relation
-  passwordResets  PasswordReset[]   // tokens de reset de senha
+  memberships    BoardMember[] // quadros dos quais o usuário é membro
+  assignedCards  CardAssignee[] // cartões pelo qual o usuário é responsável
+  comments       Comment[] // comentários feitos pelo usuário
+  activities     Activity[] // atividades realizada pelos usuários
+  ownedBoards    Board[] // Added this line for the inverse relation
+  passwordResets PasswordReset[] // tokens de reset de senha
+  chatMessages   ChatMessage[] // mensagens de chat enviadas pelo usuário
+  invitesSent    BoardInvite[]   @relation("InvitesSent") // convites enviados pelo usuário
+  notifications  Notification[] // notificações do usuário
 }
 
 model Board {
@@ -58,25 +60,27 @@ model Board {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id])
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
 
   // Relacionamentos
-  members   BoardMember[]
-  columns   Column[]
-  activities Activity[]
+  members      BoardMember[]
+  columns      Column[]
+  activities   Activity[]
+  chatMessages ChatMessage[]
+  invites      BoardInvite[]
 }
 
 // Tabela de Junção para Membros e Permissões (Muitos-para-Muitos)
 model BoardMember {
-  userId  String
-  boardId String
-  role    Role     @default(MEMBER)
+  userId   String
+  boardId  String
+  role     Role     @default(MEMBER)
   joinedAt DateTime @default(now())
 
   // Relacionamentos
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  board   Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
   @@id([userId, boardId])
 }
@@ -88,23 +92,23 @@ model Column {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  boardId   String
-  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId String
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
   // Relacionamentos
-  cards     Card[]
+  cards Card[]
 }
 
 model Card {
   id          String   @id @default(uuid())
   title       String
   description String?
-  order       Int      // Posição do cartão na coluna
+  order       Int // Posição do cartão na coluna
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  columnId    String
-  column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  columnId String
+  column   Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
 
   // Relacionamentos
   assignees CardAssignee[]
@@ -113,8 +117,8 @@ model Card {
 
 // Responsáveis pelo cartão
 model CardAssignee {
-  cardId String
-  userId String
+  cardId     String
+  userId     String
   assignedAt DateTime @default(now())
 
   // Relacionamentos
@@ -130,24 +134,24 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cardId    String
-  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  cardId String
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 model Activity {
-  id        String   @id @default(uuid())
+  id        String       @id @default(uuid())
   type      ActivityType
   details   Json?
-  createdAt DateTime @default(now())
+  createdAt DateTime     @default(now())
 
-  boardId   String
-  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId String
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Password reset tokens
@@ -158,9 +162,69 @@ model PasswordReset {
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([expiresAt])
+}
+
+// Chat messages for boards
+model ChatMessage {
+  id        String   @id @default(uuid())
+  message   String
+  createdAt DateTime @default(now())
+
+  boardId String
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Board invitations
+model BoardInvite {
+  id        String       @id @default(uuid())
+  email     String
+  role      Role         @default(MEMBER)
+  status    InviteStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  boardId String
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  inviterId String
+  inviter   User   @relation("InvitesSent", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, email, status])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+// Notifications system
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  data      Json? // Additional data for the notification
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum NotificationType {
+  BOARD_INVITE
+  MEMBER_ADDED
+  MEMBER_REMOVED
+  CARD_ASSIGNED
+  COMMENT_ADDED
 }

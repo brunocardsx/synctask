@@ -5,6 +5,9 @@ import boardsRoutes from './api/boards/boards.route.js';
 import cardRoutes from './api/cards/card.route.js';
 import columnRoutes from './api/columns/columns.route.js';
 import memberRoutes from './api/members/members.route.js';
+import chatRoutes from './api/chat/chat.route.js';
+import inviteRoutes from './api/invites/invite.route.js';
+import notificationRoutes from './api/notifications/notification.route.js';
 import { corsConfig } from './config/env.js';
 import {
   authLimiter,
@@ -15,7 +18,7 @@ import {
   mongoSanitizeConfig,
   requestId,
   securityHeaders,
-  securityLogger
+  securityLogger,
 } from './middlewares/security.js';
 
 const app = express();
@@ -50,7 +53,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/boards', boardsRoutes);
 app.use('/api/cards', cardRoutes);
 app.use('/api/columns', columnRoutes);
-app.use('/api/members', memberRoutes);
+app.use('/api/boards', memberRoutes);
+app.use('/api/boards', chatRoutes);
+app.use('/api', inviteRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
