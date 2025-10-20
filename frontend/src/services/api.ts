@@ -5,7 +5,7 @@ const apiBaseUrl = (() => {
   if (import.meta.env.DEV) {
     return "http://localhost:3001/api";
   }
-  
+
   // Em produção, usar Railway diretamente
   return "https://synctask-production.up.railway.app/api";
 })();
@@ -41,3 +41,4 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+export const api = apiClient;

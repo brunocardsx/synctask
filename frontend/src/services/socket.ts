@@ -24,7 +24,7 @@ const createSocket = (): Socket => {
   console.log("Socket: URL:", url);
 
   return io(url, {
-    autoConnect: false,
+    autoConnect: true,
     transports: ["websocket", "polling"],
     timeout: 20000,
     reconnection: true,
@@ -38,27 +38,30 @@ const createSocket = (): Socket => {
 
 // Adicionar listeners de debug
 const addDebugListeners = (socket: Socket) => {
-  socket.on('connect', () => {
-    console.log('🔌 Socket conectado:', socket.id);
+  socket.on("connect", () => {
+    console.log("🔌 Socket conectado:", socket.id);
   });
 
-  socket.on('disconnect', (reason) => {
-    console.log('🔌 Socket desconectado:', reason);
+  socket.on("disconnect", (reason) => {
+    console.log("🔌 Socket desconectado:", reason);
   });
 
-  socket.on('connect_error', (error) => {
-    console.error('🔌 Erro de conexão do socket:', error);
+  socket.on("connect_error", (error) => {
+    console.error("🔌 Erro de conexão do socket:", error);
   });
 
-  socket.on('error', (error) => {
-    console.error('🔌 Erro do socket:', error);
+  socket.on("error", (error) => {
+    console.error("🔌 Erro do socket:", error);
   });
 };
 
 export const getSocket = (): Socket => {
+  console.log("getSocket called, socketInstance exists:", !!socketInstance);
   if (!socketInstance) {
+    console.log("Creating new socket instance");
     socketInstance = createSocket();
     addDebugListeners(socketInstance);
+    console.log("Socket instance created:", !!socketInstance);
   }
   return socketInstance;
 };
