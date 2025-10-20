@@ -7,6 +7,9 @@ import "./index.css";
 import { router } from "./router";
 
 console.log("Main.tsx loaded");
+console.log("Creating React root...");
+
+console.log("Rendering app with SocketProvider...");
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -16,3 +19,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </SocketProvider>
   </React.StrictMode>
 );
+
+console.log("App rendered successfully");

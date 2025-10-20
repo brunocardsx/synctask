@@ -10,6 +10,12 @@ export const createRateLimit = (
   max: number,
   message: string
 ) => {
+  if (process.env.DISABLE_RATE_LIMIT === 'true') {
+    return (req: Request, res: Response, next: NextFunction) => {
+      next();
+    };
+  }
+
   return rateLimit({
     windowMs,
     max,
@@ -28,14 +34,14 @@ export const createRateLimit = (
 // General API rate limiting
 export const generalLimiter = createRateLimit(
   15 * 60 * 1000, // 15 minutes
-  100, // limit each IP to 100 requests per windowMs
+  process.env.NODE_ENV === 'test' ? 10000 : 100, // limit each IP to 10000 requests per windowMs during tests, 100 otherwise
   'Muitas requisições deste IP, tente novamente em 15 minutos.'
 );
 
 // Auth endpoints rate limiting (stricter)
 export const authLimiter = createRateLimit(
   1 * 60 * 1000, // 1 minute
-  50, // limit each IP to 50 requests per windowMs (more permissive for dev)
+  process.env.NODE_ENV === 'test' ? 100000 : 50, // limit each IP to 100000 requests per windowMs during tests, 50 otherwise
   'Muitas tentativas de login, tente novamente em 1 minuto.'
 );
 

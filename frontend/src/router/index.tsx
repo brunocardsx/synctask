@@ -1,21 +1,21 @@
-import { createBrowserRouter } from 'react-router-dom';
-import App from '../App';
-import BoardPage from '../pages/BoardPage';
-import DashboardPage from '../pages/DashboardPage';
-import LoginPage from '../pages/LoginPage';
-import RegisterPage from '../pages/RegisterPage';
+import { createBrowserRouter } from "react-router-dom";
+import App from "../App";
+import { BoardPage } from "../pages/BoardPage";
+import DashboardPage from "../pages/DashboardPage";
+import LoginPage from "../pages/LoginPage";
+import RegisterPage from "../pages/RegisterPage";
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <App />,
     children: [
       {
-        path: '/login',
+        path: "/login",
         element: <LoginPage />,
       },
       {
-        path: '/register',
+        path: "/register",
         element: <RegisterPage />,
       },
       {
@@ -23,11 +23,11 @@ export const router = createBrowserRouter([
         element: <DashboardPage />,
       },
       {
-        path: 'board/:boardId',
+        path: "board/:boardId",
         element: <BoardPage />,
       },
     ],
   },
 ]);
 
-console.log('Router created:', router);
+console.log("Router created:", router);

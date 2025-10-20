@@ -64,3 +64,7 @@ export const createWebSocketRateLimit = (limit: number, windowMs: number) => {
 // Rate limits específicos para chat
 export const chatRateLimit = createWebSocketRateLimit(30, 60000); // 30 mensagens por minuto
 export const joinBoardRateLimit = createWebSocketRateLimit(10, 60000); // 10 joins por minuto
+
+
+
+
