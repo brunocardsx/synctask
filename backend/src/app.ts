@@ -33,9 +33,26 @@ app.use(compressionConfig);
 app.use(requestId);
 app.use(securityLogger);
 
-// Rate limiting
-app.use('/api/', generalLimiter);
-app.use('/api/auth/', authLimiter);
+// Rate limiting (disabled in development and test modes)
+const isRateLimitDisabled =
+  process.env.DISABLE_RATE_LIMIT === 'true' ||
+  process.env.NODE_ENV === 'development' ||
+  process.env.NODE_ENV === 'test';
+
+console.log('🔧 Rate limiting config:', {
+  DISABLE_RATE_LIMIT: process.env.DISABLE_RATE_LIMIT,
+  NODE_ENV: process.env.NODE_ENV,
+  RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS,
+  isRateLimitDisabled,
+});
+
+if (!isRateLimitDisabled) {
+  console.log('⚠️ Rate limiting ENABLED');
+  app.use('/api/', generalLimiter);
+  app.use('/api/auth/', authLimiter);
+} else {
+  console.log('✅ Rate limiting DISABLED (development/test mode)');
+}
 
 // Body parsing with size limits
 app.use(express.json({ limit: '10mb' }));

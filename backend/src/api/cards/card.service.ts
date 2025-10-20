@@ -39,10 +39,10 @@ const checkUserPermission = async (
   userId: string
 ): Promise<boolean> => {
   if (!column) return false;
-  
+
   // Se é o owner, tem permissão
   if (column.board.ownerId === userId) return true;
-  
+
   // Verificar se é membro do board
   const membership = await tx.boardMember.findUnique({
     where: {
@@ -52,7 +52,7 @@ const checkUserPermission = async (
       },
     },
   });
-  
+
   return Boolean(membership);
 };
 
@@ -134,11 +134,25 @@ const checkCardPermission = async (
   card: { column: { board: { ownerId: string; id: string } } } | null,
   userId: string
 ): Promise<boolean> => {
-  if (!card) return false;
-  
+  if (!card) {
+    console.log('❌ Card não encontrado para verificação de permissão');
+    return false;
+  }
+
+  console.log('🔍 Verificando permissão do card:', {
+    cardId: (card as any).id || 'unknown',
+    boardId: card.column.board.id,
+    ownerId: card.column.board.ownerId,
+    userId,
+    isOwner: card.column.board.ownerId === userId,
+  });
+
   // Se é o owner, tem permissão
-  if (card.column.board.ownerId === userId) return true;
-  
+  if (card.column.board.ownerId === userId) {
+    console.log('✅ Usuário é o owner - permissão concedida');
+    return true;
+  }
+
   // Verificar se é membro do board
   const membership = await tx.boardMember.findUnique({
     where: {
@@ -148,7 +162,19 @@ const checkCardPermission = async (
       },
     },
   });
-  
+
+  console.log('🔍 Verificação de membro:', {
+    userId,
+    boardId: card.column.board.id,
+    membership: membership
+      ? {
+          role: membership.role,
+          joinedAt: membership.joinedAt,
+        }
+      : null,
+    hasPermission: Boolean(membership),
+  });
+
   return Boolean(membership);
 };
 
@@ -195,7 +221,9 @@ const emitCardDeletedEvent = (
   cardId: string,
   columnId: string
 ) => {
-  getIO().to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_DELETED, { cardId, columnId });
+  getIO()
+    .to(`board-${boardId}`)
+    .emit(SOCKET_EVENTS.CARD_DELETED, { cardId, columnId });
   console.log(
     `📡 Evento '${SOCKET_EVENTS.CARD_DELETED}' emitido para board-${boardId}`
   );
@@ -332,16 +360,44 @@ export const moveCard = async (
   newOrder: number,
   userId: string
 ) => {
+  console.log('🔄 moveCard chamado:', {
+    cardId,
+    newColumnId,
+    newOrder,
+    userId,
+  });
+
   if (!validateMoveCardParams(cardId, newColumnId, newOrder, userId)) {
+    console.log('❌ Parâmetros inválidos para moveCard');
     return null;
   }
 
   return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const card = await findCardWithColumnAndBoard(tx, cardId);
 
-    if (!card || !(await checkCardPermission(tx, card, userId))) {
+    if (!card) {
+      console.log('❌ Card não encontrado:', cardId);
       return null;
     }
+
+    console.log('🔍 Card encontrado:', {
+      cardId: card.id,
+      boardId: card.column.board.id,
+      ownerId: card.column.board.ownerId,
+    });
+
+    const hasPermission = await checkCardPermission(tx, card, userId);
+
+    if (!hasPermission) {
+      console.log('❌ Usuário não tem permissão para mover o card:', {
+        userId,
+        cardId,
+        boardId: card.column.board.id,
+      });
+      return null;
+    }
+
+    console.log('✅ Permissão concedida, movendo card...');
 
     const { columnId: oldColumnId, order: oldOrder } = card;
     const boardId = card.column.boardId;
@@ -356,6 +412,13 @@ export const moveCard = async (
         columnId: newColumnId,
         order: newOrder,
       },
+    });
+
+    console.log('✅ Card movido com sucesso:', {
+      cardId,
+      oldColumnId,
+      newColumnId,
+      newOrder,
     });
 
     emitCardMovedEvent(

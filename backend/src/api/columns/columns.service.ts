@@ -33,7 +33,12 @@ export const createColumn = async (
   });
 
   // Emitir evento Socket.IO para a sala do board
-  getIO().to(boardId).emit('column:created', column);
+  const io = getIO();
+  console.log(`📡 Emitindo evento 'column:created' para board ${boardId}`);
+  console.log(`📡 Coluna criada:`, column);
+  console.log(`📡 Socket.IO instance:`, !!io);
+  
+  io.to(boardId).emit('column:created', column);
   console.log(`📡 Evento 'column:created' emitido para board ${boardId}`);
 
   return column;
