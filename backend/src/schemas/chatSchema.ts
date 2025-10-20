@@ -23,18 +23,17 @@ export const boardParamsSchema = z.object({
 
 // Schema para dados do WebSocket
 export const webSocketChatDataSchema = z.object({
-  boardId: z.string().uuid('ID do board deve ser um UUID válido'),
-  userId: z.string().uuid('ID do usuário deve ser um UUID válido'),
+  boardId: z.string().uuid('Board ID must be valid UUID'),
   message: z
     .string()
-    .min(1, 'Mensagem não pode estar vazia')
-    .max(1000, 'Mensagem não pode ter mais de 1000 caracteres')
+    .min(1, 'Message cannot be empty')
+    .max(1000, 'Message cannot exceed 1000 characters')
     .refine(
       msg =>
         !/<script|<\/script|<img|<iframe|<object|<embed|<link|<style|<meta|javascript:|data:|vbscript:|on\w+\s*=|onclick|onload|onerror|onmouseover/i.test(
           msg
         ),
-      'Mensagem contém conteúdo malicioso'
+      'Message contains malicious content'
     )
     .transform(msg => msg.trim()),
 });
