@@ -20,26 +20,42 @@ export const websocketAuthMiddleware = (
       socket.handshake.auth.token ||
       socket.handshake.headers.authorization?.replace('Bearer ', '');
 
+    console.log(
+      'WebSocket auth - Token received:',
+      token ? 'Present' : 'Missing'
+    );
+    console.log('WebSocket auth - Handshake auth:', socket.handshake.auth);
+    console.log(
+      'WebSocket auth - Headers:',
+      socket.handshake.headers.authorization
+    );
+
     if (!token) {
-      return next(new Error('Token de autenticação não fornecido'));
+      console.log('WebSocket auth - No token provided');
+      return next(new Error('Authentication token not provided'));
     }
 
-    const decoded = jwt.verify(token, securityConfig.jwtSecret) as {
+    const decoded = jwt.verify(token, securityConfig.jwtSecret, {
+      issuer: 'synctask-api',
+      audience: 'synctask-client',
+    }) as {
       userId: string;
-      email: string;
-      name: string;
     };
+
+    console.log('WebSocket auth - Token decoded successfully:', decoded);
 
     socket.userId = decoded.userId;
     socket.user = {
       id: decoded.userId,
-      email: decoded.email,
-      name: decoded.name,
+      email: '',
+      name: '',
     };
 
+    console.log('WebSocket auth - User authenticated:', socket.userId);
     next();
   } catch (error) {
-    next(new Error('Token inválido ou expirado'));
+    console.error('WebSocket auth error:', error);
+    next(new Error('Invalid or expired token'));
   }
 };
 

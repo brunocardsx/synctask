@@ -43,24 +43,14 @@ export const setupCardHandlers = (socket: Socket) => {
       const result = await moveCard(cardId, toColumnId, newOrder, userId!);
 
       if (result) {
-        // Emitir evento para todos os usuários conectados ao board
+        console.log(`✅ Card moved successfully by user ${userId}`);
         const io = getIO();
-        io.to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_MOVED, {
-          cardId,
-          oldColumnId: fromColumnId,
-          newColumnId: toColumnId,
-          newOrder,
-          card: result,
-          movedBy: socket.id,
-        });
-
-        console.log(`📡 Card movement broadcasted to board-${boardId}`);
         console.log(
-          `👥 Usuários na sala board-${boardId}:`,
+          `👥 Users in room board-${boardId}:`,
           io.sockets.adapter.rooms.get(`board-${boardId}`)?.size || 0
         );
       } else {
-        socket.emit('error', { message: 'Falha ao mover card' });
+        socket.emit('error', { message: 'Failed to move card' });
       }
     } catch (error: any) {
       console.error('Erro ao processar movimento de card:', error);
@@ -98,13 +88,9 @@ export const setupCardHandlers = (socket: Socket) => {
       );
 
       if (result) {
-        // Emitir evento para todos os usuários conectados ao board
-        const io = getIO();
-        io.to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_CREATED, result);
-
-        console.log(`📡 Card creation broadcasted to board-${boardId}`);
+        console.log(`✅ Card created successfully by user ${userId}`);
       } else {
-        socket.emit('error', { message: 'Falha ao criar card' });
+        socket.emit('error', { message: 'Failed to create card' });
       }
     } catch (error: any) {
       console.error('Erro ao processar criação de card:', error);
@@ -142,13 +128,9 @@ export const setupCardHandlers = (socket: Socket) => {
       );
 
       if (result) {
-        // Emitir evento para todos os usuários conectados ao board
-        const io = getIO();
-        io.to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_UPDATED, result);
-
-        console.log(`📡 Card update broadcasted to board-${boardId}`);
+        console.log(`✅ Card updated successfully by user ${userId}`);
       } else {
-        socket.emit('error', { message: 'Falha ao atualizar card' });
+        socket.emit('error', { message: 'Failed to update card' });
       }
     } catch (error: any) {
       console.error('Erro ao processar atualização de card:', error);
@@ -181,16 +163,9 @@ export const setupCardHandlers = (socket: Socket) => {
       const result = await deleteCard(cardId, userId!);
 
       if (result) {
-        // Emitir evento para todos os usuários conectados ao board
-        const io = getIO();
-        io.to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_DELETED, {
-          cardId,
-          success: true,
-        });
-
-        console.log(`📡 Card deletion broadcasted to board-${boardId}`);
+        console.log(`✅ Card deleted successfully by user ${userId}`);
       } else {
-        socket.emit('error', { message: 'Falha ao excluir card' });
+        socket.emit('error', { message: 'Failed to delete card' });
       }
     } catch (error: any) {
       console.error('Erro ao processar exclusão de card:', error);

@@ -13,6 +13,8 @@ import {
   logInvalidData,
 } from './utils/securityLogger.js';
 import { setupCardHandlers } from './websockets/socket.handler.js';
+import { createChatMessage } from './api/chat/chat.service.js';
+import { roomManager } from './utils/roomManager.js';
 
 let io: Server;
 
@@ -28,8 +30,8 @@ export const initializeSocket = (httpServer: any) => {
     },
   });
 
-  // Middleware de autenticação
   io.use(websocketAuthMiddleware);
+  roomManager.setIO(io);
 
   // Configurar eventos de chat com segurança
   io.on('connection', socket => {
@@ -44,7 +46,7 @@ export const initializeSocket = (httpServer: any) => {
     setupCardHandlers(socket);
 
     // Evento para entrar em um board (para receber eventos de colunas/cards)
-    socket.on('join_board', (boardId: string) => {
+    socket.on('join_board', async (boardId: string) => {
       console.log(`🎯 Evento join_board recebido:`, {
         userId,
         boardId,
@@ -69,21 +71,15 @@ export const initializeSocket = (httpServer: any) => {
         return;
       }
 
-      console.log(`✅ Validations passed, joining room...`);
-      socket.join(`board-${boardId}`);
-      socket.emit('joined_board', { boardId });
-      console.log(`📋 Usuário ${userId} entrou no board ${boardId}`);
-      console.log(`🏠 Salas do usuário:`, Array.from(socket.rooms));
-      console.log(
-        `👥 Total de usuários na sala board-${boardId}:`,
-        io.sockets.adapter.rooms.get(`board-${boardId}`)?.size || 0
-      );
+      const success = await roomManager.joinBoard(socket, boardId, userId!);
+      if (!success) {
+        return;
+      }
     });
 
     // Evento para sair de um board
     socket.on('leave_board', (boardId: string) => {
-      socket.leave(`board-${boardId}`);
-      console.log(`📋 Usuário ${userId} saiu do board ${boardId}`);
+      roomManager.leaveBoard(socket);
     });
 
     // Evento para enviar mensagem no chat
@@ -103,21 +99,32 @@ export const initializeSocket = (httpServer: any) => {
           return;
         }
 
-        // Verificar se o usuário tem permissão para enviar mensagem neste board
-        // Esta validação será feita no service
         const messageData = {
           ...validatedData,
-          userId: userId!, // Usar userId do token, não do cliente
+          userId: userId!,
         };
 
-        // Emitir evento para processar a mensagem
-        socket.emit('chat_message_processed', messageData);
+        createChatMessage(
+          messageData.boardId as string,
+          messageData.message as string,
+          messageData.userId as string
+        )
+          .then((createdMessage: any) => {
+            console.log(`Message created: ${createdMessage.id}`);
+          })
+          .catch((error: any) => {
+            console.error('Error creating message:', error);
+            socket.emit('chat_error', {
+              message: error.message || 'Error sending message',
+            });
+          });
       });
     });
 
     // Evento de desconexão
     socket.on('disconnect', () => {
-      console.log(`🔌 Usuário ${userId} desconectado`);
+      roomManager.leaveBoard(socket);
+      console.log(`User ${userId} disconnected`);
     });
 
     // Evento de erro
@@ -137,12 +144,16 @@ export const initializeSocket = (httpServer: any) => {
 };
 
 export const getIO = () => {
+  console.log('getIO called, io exists:', !!io);
+
   if (!io) {
-    // Durante os testes, retorna um mock ao invés de dar erro
+    console.log('IO not initialized, checking environment...');
+
     if (
       process.env.NODE_ENV === 'test' ||
       process.env.npm_lifecycle_event === 'test'
     ) {
+      console.log('Returning mock IO for tests');
       return {
         to: () => ({
           emit: (event: string, data: any) => {
@@ -154,7 +165,11 @@ export const getIO = () => {
         }),
       } as any;
     }
+
+    console.error('Socket.io não inicializado!');
     throw new Error('Socket.io não inicializado!');
   }
+
+  console.log('Returning real IO instance');
   return io;
 };
