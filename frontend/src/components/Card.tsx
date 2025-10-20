@@ -1,6 +1,6 @@
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import type { Card as CardType } from '../types/index.js';
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import type { Card as CardType } from "../types/index.js";
 
 interface CardProps {
   card: CardType;
@@ -15,11 +15,15 @@ const createCardStyle = (transform: any, transition: string | undefined) => ({
 const createCardClassName = (isDragging: boolean) => `
   bg-white p-3 mt-3 rounded-lg shadow-sm border border-gray-200
   cursor-grab active:cursor-grabbing
-  hover:shadow-md transition-shadow
-  ${isDragging ? 'opacity-50' : 'opacity-100'}
+  hover:shadow-md transition-all duration-200
+  ${isDragging ? "opacity-50 scale-105 rotate-1" : "opacity-100 scale-100 rotate-0"}
 `;
 
-const handleCardClick = (event: React.MouseEvent, card: CardType, onCardClick: (card: CardType) => void) => {
+const handleCardClick = (
+  event: React.MouseEvent,
+  card: CardType,
+  onCardClick: (card: CardType) => void
+) => {
   event.stopPropagation();
   onCardClick(card);
 };

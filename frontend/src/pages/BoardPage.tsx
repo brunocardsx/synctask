@@ -2,6 +2,10 @@ import {
   DndContext,
   type DragEndEvent,
   type DragOverEvent,
+  closestCenter,
+  useSensor,
+  useSensors,
+  PointerSensor,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useEffect, useState } from "react";
@@ -14,9 +18,9 @@ import { BoardMembers } from "../components/BoardMembers";
 import { BoardChat } from "../components/BoardChat";
 import { MembersTab } from "../components/MembersTab";
 import { NotificationCenter } from "../components/NotificationCenter";
-import { useSocket } from "../hooks/useSocket";
+import { useSocket } from "../context/SocketContext";
 import { getUserData } from "../utils/storage";
-import apiClient from "../services/api";
+import api from "../services/api";
 import { Kanban, Users, MessageSquare, ChevronLeft } from "lucide-react";
 import { Button } from "../components/ui/button";
 
@@ -50,7 +54,7 @@ interface Board {
   updatedAt: string;
 }
 
-export default function BoardPage() {
+export function BoardPage() {
   // Verificar autenticação antes de renderizar
   const authToken = localStorage.getItem("authToken");
   if (!authToken) {
@@ -60,7 +64,7 @@ export default function BoardPage() {
   }
 
   const { boardId } = useParams<{ boardId: string }>();
-  const socket = useSocket();
+  const { socket } = useSocket();
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +89,14 @@ export default function BoardPage() {
     "kanban"
   );
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
   // Busca inicial dos dados do board
   useEffect(() => {
     const fetchBoard = async () => {
@@ -97,48 +109,13 @@ export default function BoardPage() {
           return;
         }
 
-        const response = await apiClient.get(`/boards/${boardId}`, {
+        const response = await api.get(`/boards/${boardId}`, {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
         });
 
-        // Adicionar cards de exemplo para testar drag & drop
-        const boardData = response.data;
-        if (boardData.columns.length > 0) {
-          // Adicionar cards de exemplo na primeira coluna
-          boardData.columns[0].cards = [
-            {
-              id: "card-1",
-              title: "Implementar autenticação",
-              description: "Criar sistema de login e registro de usuários",
-              order: 0,
-              columnId: boardData.columns[0].id,
-            },
-            {
-              id: "card-2",
-              title: "Configurar banco de dados",
-              description: "Setup do PostgreSQL e Prisma",
-              order: 1,
-              columnId: boardData.columns[0].id,
-            },
-          ];
-
-          // Cards na segunda coluna
-          if (boardData.columns[1]) {
-            boardData.columns[1].cards = [
-              {
-                id: "card-3",
-                title: "Implementar WebSockets",
-                description: "Sistema de tempo real com Socket.IO",
-                order: 0,
-                columnId: boardData.columns[1].id,
-              },
-            ];
-          }
-        }
-
-        setBoard(boardData);
+        setBoard(response.data);
 
         // Determinar permissões do usuário atual
         const userData = getUserData();
@@ -149,16 +126,14 @@ export default function BoardPage() {
           "localStorage userEmail:",
           localStorage.getItem("userEmail")
         );
-        // Verificar se é owner - se não houver ownerId, considerar o primeiro membro como owner
-        const isOwner =
-          userData.userId === boardData.ownerId ||
-          (!boardData.ownerId &&
-            userData.userId === boardData.members?.[0]?.userId);
+
+        // Verificar se é owner
+        const isOwner = userData.userId === response.data.ownerId;
 
         console.log("Debug Owner Check:");
         console.log("- userData.userId:", userData.userId);
-        console.log("- boardData.ownerId:", boardData.ownerId);
-        console.log("- boardData.members:", boardData.members);
+        console.log("- boardData.ownerId:", response.data.ownerId);
+        console.log("- boardData.members:", response.data.members);
         console.log("- isOwner:", isOwner);
 
         setCurrentUser({
@@ -168,7 +143,7 @@ export default function BoardPage() {
         });
 
         // Buscar informações do owner
-        await fetchBoardOwner(boardData.ownerId);
+        await fetchBoardOwner(response.data.ownerId);
       } catch (err) {
         console.error("Erro ao carregar board:", err);
         setError("Erro ao carregar o board");
@@ -184,7 +159,7 @@ export default function BoardPage() {
   const fetchBoardOwner = async (ownerId: string) => {
     try {
       const authToken = localStorage.getItem("authToken");
-      const response = await apiClient.get(`/users/${ownerId}`, {
+      const response = await api.get(`/users/${ownerId}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setBoardOwner(response.data);
@@ -193,63 +168,180 @@ export default function BoardPage() {
     }
   };
 
-  // Função para lidar com drag over (mover entre colunas)
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-
-    if (!over || !board) return;
-
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
-    // Encontrar a coluna de origem e destino
-    const activeColumn = board.columns.find((col) =>
-      col.cards.some((card) => card.id === activeId)
-    );
-    const overColumn = board.columns.find(
-      (col) => col.id === overId || col.cards.some((card) => card.id === overId)
-    );
-
-    if (!activeColumn || !overColumn || activeColumn.id === overColumn.id) {
-      return;
-    }
-
-    // Mover card entre colunas
-    setBoard((currentBoard) => {
-      if (!currentBoard) return null;
-
-      const newColumns = currentBoard.columns.map((column) => {
-        if (column.id === activeColumn.id) {
-          return {
-            ...column,
-            cards: column.cards.filter((card) => card.id !== activeId),
-          };
-        }
-
-        if (column.id === overColumn.id) {
-          const cardToMove = activeColumn.cards.find(
-            (card) => card.id === activeId
-          );
-          if (cardToMove) {
-            return {
-              ...column,
-              cards: [...column.cards, { ...cardToMove, columnId: column.id }],
-            };
-          }
-        }
-
-        return column;
-      });
-
-      return { ...currentBoard, columns: newColumns };
-    });
-  };
+  // Estado para controlar se estamos processando um movimento local
+  const [isProcessingLocalMove, setIsProcessingLocalMove] = useState(false);
 
   // Função para lidar com o fim do drag
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (!over || !board) return;
+    if (!over || !board || isProcessingLocalMove) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    console.log("=== DRAG END DEBUG ===");
+    console.log("activeId:", activeId);
+    console.log("overId:", overId);
+
+    // Encontrar a coluna que contém o card ativo
+    const activeColumn = board.columns.find((col) =>
+      col.cards.some((card) => card.id === activeId)
+    );
+
+    if (!activeColumn) {
+      console.log("❌ Active column not found");
+      return;
+    }
+
+    const activeCardIndex = activeColumn.cards.findIndex(
+      (card) => card.id === activeId
+    );
+
+    console.log("activeColumn:", activeColumn.id);
+    console.log("activeCardIndex:", activeCardIndex);
+
+    // Verificar se overId é um ID de coluna (movimento entre colunas)
+    const targetColumn = board.columns.find((col) => col.id === overId);
+
+    if (targetColumn) {
+      // Movimento entre colunas diferentes
+      console.log("🔄 Moving between columns:", {
+        from: activeColumn.id,
+        to: targetColumn.id,
+      });
+
+      // Marcar que estamos processando movimento local
+      setIsProcessingLocalMove(true);
+
+      // Atualizar estado local imediatamente
+      setBoard((currentBoard) => {
+        if (!currentBoard) return null;
+
+        console.log("🔄 Processando movimento local:", {
+          activeId,
+          fromColumn: activeColumn.id,
+          toColumn: targetColumn.id,
+        });
+
+        // Primeiro, remover o card de TODAS as colunas
+        const columnsWithoutCard = currentBoard.columns.map((column) => ({
+          ...column,
+          cards: column.cards.filter((card) => card.id !== activeId),
+        }));
+
+        // Encontrar o card original
+        const movedCard = activeColumn.cards.find(
+          (card) => card.id === activeId
+        );
+
+        if (!movedCard) {
+          console.log("❌ Card não encontrado para movimento local");
+          return currentBoard;
+        }
+
+        // Adicionar o card na nova coluna
+        const newColumns = columnsWithoutCard.map((column) => {
+          if (column.id === targetColumn.id) {
+            const updatedCard = { ...movedCard, columnId: targetColumn.id };
+            return {
+              ...column,
+              cards: [...column.cards, updatedCard],
+            };
+          }
+          return column;
+        });
+
+        console.log("✅ Movimento local processado");
+        return { ...currentBoard, columns: newColumns };
+      });
+
+      // Enviar evento via WebSocket
+      if (socket) {
+        const movedCard = activeColumn.cards.find(
+          (card) => card.id === activeId
+        );
+        if (movedCard) {
+          socket.emit("card:moved", {
+            cardId: activeId,
+            fromColumnId: activeColumn.id,
+            toColumnId: targetColumn.id,
+            newOrder: targetColumn.cards.length,
+            boardId: board.id,
+          });
+          console.log("📡 WebSocket event sent");
+        }
+      }
+
+      // Resetar flag após um delay
+      setTimeout(() => setIsProcessingLocalMove(false), 1000);
+    } else {
+      // Verificar se overId é um card (reordenação dentro da mesma coluna)
+      const overCardIndex = activeColumn.cards.findIndex(
+        (card) => card.id === overId
+      );
+
+      if (overCardIndex !== -1 && overCardIndex !== activeCardIndex) {
+        console.log("🔄 Reordering within same column:", {
+          activeCardIndex,
+          overCardIndex,
+        });
+
+        // Marcar que estamos processando movimento local
+        setIsProcessingLocalMove(true);
+
+        // Atualizar estado local imediatamente
+        setBoard((currentBoard) => {
+          if (!currentBoard) return null;
+
+          console.log("🔄 Processando reordenação local:", {
+            activeId,
+            columnId: activeColumn.id,
+            oldIndex: activeCardIndex,
+            newIndex: overCardIndex,
+          });
+
+          const newColumns = currentBoard.columns.map((column) => {
+            if (column.id === activeColumn.id) {
+              const newCards = arrayMove(
+                column.cards,
+                activeCardIndex,
+                overCardIndex
+              );
+              return { ...column, cards: newCards };
+            }
+            return column;
+          });
+
+          console.log("✅ Reordenação local processada");
+          return { ...currentBoard, columns: newColumns };
+        });
+
+        // Enviar evento via WebSocket
+        if (socket) {
+          socket.emit("card:moved", {
+            cardId: activeId,
+            fromColumnId: activeColumn.id,
+            toColumnId: activeColumn.id,
+            newOrder: overCardIndex,
+            boardId: board.id,
+          });
+          console.log("📡 WebSocket event sent");
+        }
+
+        // Resetar flag após um delay
+        setTimeout(() => setIsProcessingLocalMove(false), 1000);
+      } else {
+        console.log("❌ No valid movement detected");
+      }
+    }
+  };
+
+  // Função para lidar com drag over (melhorada para animações)
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+
+    if (!over || !board || isProcessingLocalMove) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
@@ -261,89 +353,15 @@ export default function BoardPage() {
 
     if (!activeColumn) return;
 
-    // Se estamos reordenando dentro da mesma coluna
-    const activeCardIndex = activeColumn.cards.findIndex(
-      (card) => card.id === activeId
-    );
-    const overCardIndex = activeColumn.cards.findIndex(
-      (card) => card.id === overId
-    );
+    // Verificar se overId é um ID de coluna (movimento entre colunas)
+    const targetColumn = board.columns.find((col) => col.id === overId);
 
-    if (activeCardIndex !== -1 && overCardIndex !== -1) {
-      setBoard((currentBoard) => {
-        if (!currentBoard) return null;
-
-        const newColumns = currentBoard.columns.map((column) => {
-          if (column.id === activeColumn.id) {
-            const newCards = arrayMove(
-              column.cards,
-              activeCardIndex,
-              overCardIndex
-            );
-            return { ...column, cards: newCards };
-          }
-          return column;
-        });
-
-        return { ...currentBoard, columns: newColumns };
+    if (targetColumn && targetColumn.id !== activeColumn.id) {
+      // Movimento entre colunas diferentes - apenas preview visual
+      console.log("🔄 Drag over preview:", {
+        from: activeColumn.id,
+        to: targetColumn.id,
       });
-    }
-
-    console.log("Drag ended:", { activeId, overId });
-
-    // Emitir evento de movimento de card via WebSocket apenas se houve movimento real
-    if (socket) {
-      const cardToMove = activeColumn.cards.find(
-        (card) => card.id === activeId
-      );
-      
-      if (cardToMove) {
-        // Determinar se houve movimento real
-        let shouldEmit = false;
-        let fromColumnId = activeColumn.id;
-        let toColumnId = activeColumn.id;
-        let newOrder = activeCardIndex;
-
-        // Se está movendo para outra coluna
-        if (overId.startsWith("column-")) {
-          const targetColumnId = overId.replace("column-", "");
-          const targetColumn = board.columns.find(col => col.id === targetColumnId);
-          
-          if (targetColumn && targetColumn.id !== activeColumn.id) {
-            shouldEmit = true;
-            fromColumnId = activeColumn.id;
-            toColumnId = targetColumn.id;
-            newOrder = targetColumn.cards.length;
-          }
-        }
-        // Se está reordenando dentro da mesma coluna
-        else if (overCardIndex !== -1 && overCardIndex !== activeCardIndex) {
-          shouldEmit = true;
-          fromColumnId = activeColumn.id;
-          toColumnId = activeColumn.id;
-          newOrder = overCardIndex;
-        }
-
-        if (shouldEmit) {
-          console.log("Emitindo card:moved:", {
-            cardId: activeId,
-            fromColumnId,
-            toColumnId,
-            newOrder,
-            boardId: boardId,
-          });
-          
-          socket.emit("card:moved", {
-            cardId: activeId,
-            fromColumnId,
-            toColumnId,
-            newOrder,
-            boardId: boardId,
-          });
-        } else {
-          console.log("Movimento ignorado - sem mudança real");
-        }
-      }
     }
   };
 
@@ -383,17 +401,16 @@ export default function BoardPage() {
 
   // Configuração do Socket
   useEffect(() => {
-    if (socket) {
-      socket.connect();
-
-      if (boardId) {
-        console.log("Entrando na sala do board:", boardId);
-        socket.emit("join_board", boardId);
-      }
+    if (socket && boardId) {
+      console.log("Entrando na sala do board:", boardId);
+      socket.emit("join_board", boardId);
 
       // Listener para confirmação de entrada na sala
       socket.on("joined_board", (data: { boardId: string }) => {
         console.log("✅ Confirmado: Entrou na sala do board:", data.boardId);
+        console.log("🔌 Socket ID:", socket.id);
+        console.log("🏠 Socket conectado:", socket.connected);
+        console.log("🎯 Sala atual:", `board-${data.boardId}`);
       });
 
       // Listener para nova coluna criada
@@ -449,28 +466,47 @@ export default function BoardPage() {
       socket.on(
         "card:moved",
         (data: {
-        cardId: string;
-        oldColumnId: string;
-        newColumnId: string;
-        newOrder: number;
+          cardId: string;
+          oldColumnId: string;
+          newColumnId: string;
+          newOrder: number;
           movedBy: string;
-      }) => {
-          console.log("Card movido via WebSocket:", data);
-          
-          // Ignorar se o movimento veio do próprio usuário
-          if (data.movedBy === socket.id) {
-            console.log("Movimento ignorado - veio do próprio usuário");
+        }) => {
+          console.log("🎯 Card movido via WebSocket:", data);
+          console.log("🔄 isProcessingLocalMove:", isProcessingLocalMove);
+          console.log("🔌 Socket ID:", socket.id);
+          console.log("📡 Socket conectado:", socket.connected);
+
+          // Ignorar eventos quando estamos processando movimento local
+          if (isProcessingLocalMove) {
+            console.log(
+              "Ignorando evento WebSocket - movimento local em andamento"
+            );
             return;
           }
 
-        setBoard((currentBoard) => {
-          if (!currentBoard) return null;
+          setBoard((currentBoard) => {
+            if (!currentBoard) return null;
 
-            // Encontrar o card original primeiro
+            console.log("🔄 Processando movimento WebSocket:", {
+              cardId: data.cardId,
+              oldColumnId: data.oldColumnId,
+              newColumnId: data.newColumnId,
+              newOrder: data.newOrder,
+            });
+
+            // Primeiro, remover o card de TODAS as colunas para evitar duplicação
+            const columnsWithoutCard = currentBoard.columns.map((column) => ({
+              ...column,
+              cards: column.cards.filter((card) => card.id !== data.cardId),
+            }));
+
+            // Encontrar o card original
             let originalCard: Card | null = null;
-            
             for (const column of currentBoard.columns) {
-              const foundCard = column.cards.find(card => card.id === data.cardId);
+              const foundCard = column.cards.find(
+                (card) => card.id === data.cardId
+              );
               if (foundCard) {
                 originalCard = foundCard;
                 break;
@@ -478,30 +514,27 @@ export default function BoardPage() {
             }
 
             if (!originalCard) {
-              console.log("Card não encontrado para movimento:", data.cardId);
+              console.log("❌ Card original não encontrado");
               return currentBoard;
             }
 
-            const newColumns = currentBoard.columns.map((column) => {
-              // Remover card da coluna onde ele está atualmente (não necessariamente oldColumnId)
-              if (column.cards.some(card => card.id === data.cardId)) {
-                return {
-                  ...column,
-                  cards: column.cards.filter((card) => card.id !== data.cardId),
-                };
-              }
-
-              // Adicionar card na nova coluna
+            // Agora adicionar o card na nova posição
+            const newColumns = columnsWithoutCard.map((column) => {
               if (column.id === data.newColumnId) {
                 const updatedCard: Card = {
-                  ...originalCard,
+                  ...originalCard!,
                   columnId: data.newColumnId,
                 };
-                
-                // Inserir na posição correta
+
                 const newCards = [...column.cards];
                 newCards.splice(data.newOrder, 0, updatedCard);
-                
+
+                console.log("✅ Card adicionado na nova posição:", {
+                  columnId: data.newColumnId,
+                  newOrder: data.newOrder,
+                  totalCards: newCards.length,
+                });
+
                 return {
                   ...column,
                   cards: newCards,
@@ -517,7 +550,7 @@ export default function BoardPage() {
       );
 
       return () => {
-        socket.disconnect();
+        // Removido socket.disconnect() para evitar desconexões frequentes
       };
     }
   }, [boardId, socket]);
@@ -535,7 +568,12 @@ export default function BoardPage() {
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+    >
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50">
         {/* Header do Board */}
         <div className="bg-white/80 backdrop-blur-xl border-b border-purple-100 sticky top-0 z-40">
@@ -615,32 +653,26 @@ export default function BoardPage() {
         {/* Conteúdo das Abas */}
         <div className="max-w-7xl mx-auto px-4 py-6">
           {activeTab === "kanban" && (
-            <DndContext onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
-              <div className="flex space-x-6 overflow-x-auto pb-4">
-                {board.columns.map((column) => (
-                  <Column
-                    key={column.id}
-                    column={column}
-                    onCardClick={handleCardClick}
-                  />
-                ))}
+            <div className="flex space-x-6 overflow-x-auto pb-4">
+              {board.columns.map((column) => (
+                <Column
+                  key={column.id}
+                  column={column}
+                  onCardClick={handleCardClick}
+                />
+              ))}
 
-                {board.columns.length === 0 && (
-                  <div className="flex-1 flex items-center justify-center py-12">
-                    <AddColumnButton
-                      boardId={boardId!}
-                    />
-                  </div>
-                )}
+              {board.columns.length === 0 && (
+                <div className="flex-1 flex items-center justify-center py-12">
+                  <AddColumnButton boardId={boardId!} />
+                </div>
+              )}
 
-                {/* Botão para adicionar coluna quando já existem colunas */}
-                {board.columns.length > 0 && (
-                  <AddColumnButton
-                    boardId={boardId!}
-                  />
-                )}
-              </div>
-            </DndContext>
+              {/* Botão para adicionar coluna quando já existem colunas */}
+              {board.columns.length > 0 && (
+                <AddColumnButton boardId={boardId!} />
+              )}
+            </div>
           )}
 
           {activeTab === "members" && (
