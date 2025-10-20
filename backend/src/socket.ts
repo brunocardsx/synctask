@@ -12,13 +12,14 @@ import {
   logRateLimitExceeded,
   logInvalidData,
 } from './utils/securityLogger.js';
+import { setupCardHandlers } from './websockets/socket.handler.js';
 
 let io: Server;
 
 export const initializeSocket = (httpServer: any) => {
-  console.log("🔌 Inicializando Socket.IO...");
-  console.log("🔌 CORS origins:", corsConfig.origin);
-  
+  console.log('🔌 Inicializando Socket.IO...');
+  console.log('🔌 CORS origins:', corsConfig.origin);
+
   io = new Server(httpServer, {
     cors: {
       origin: corsConfig.origin,
@@ -39,31 +40,50 @@ export const initializeSocket = (httpServer: any) => {
     // Log de conexão
     console.log(`🔌 Usuário ${userId} conectado via WebSocket`);
 
-    // Evento para entrar no chat de um board
-    socket.on('join_board_chat', (boardId: string) => {
-      if (!joinBoardRateLimit(socket, 'join_board_chat')) {
-        logRateLimitExceeded(userId!, socket.id, 'join_board_chat', ip);
+    // Configurar handlers de cards
+    setupCardHandlers(socket);
+
+    // Evento para entrar em um board (para receber eventos de colunas/cards)
+    socket.on('join_board', (boardId: string) => {
+      console.log(`🎯 Evento join_board recebido:`, {
+        userId,
+        boardId,
+        socketId: socket.id,
+        ip,
+      });
+
+      if (!joinBoardRateLimit(socket, 'join_board')) {
+        console.log(`❌ Rate limit excedido para join_board`);
+        logRateLimitExceeded(userId!, socket.id, 'join_board', ip);
         socket.emit('error', {
-          message: 'Rate limit excedido para entrar no chat',
+          message: 'Rate limit excedido para entrar no board',
         });
         return;
       }
 
       // Validar boardId
       if (!boardId || typeof boardId !== 'string') {
+        console.log(`❌ Board ID inválido:`, boardId);
         logInvalidData(userId!, socket.id, ['Board ID inválido'], ip);
         socket.emit('error', { message: 'Board ID inválido' });
         return;
       }
 
+      console.log(`✅ Validations passed, joining room...`);
       socket.join(`board-${boardId}`);
-      console.log(`👥 Usuário ${userId} entrou no chat do board ${boardId}`);
+      socket.emit('joined_board', { boardId });
+      console.log(`📋 Usuário ${userId} entrou no board ${boardId}`);
+      console.log(`🏠 Salas do usuário:`, Array.from(socket.rooms));
+      console.log(
+        `👥 Total de usuários na sala board-${boardId}:`,
+        io.sockets.adapter.rooms.get(`board-${boardId}`)?.size || 0
+      );
     });
 
-    // Evento para sair do chat de um board
-    socket.on('leave_board_chat', (boardId: string) => {
+    // Evento para sair de um board
+    socket.on('leave_board', (boardId: string) => {
       socket.leave(`board-${boardId}`);
-      console.log(`👋 Usuário ${userId} saiu do chat do board ${boardId}`);
+      console.log(`📋 Usuário ${userId} saiu do board ${boardId}`);
     });
 
     // Evento para enviar mensagem no chat

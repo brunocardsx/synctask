@@ -59,8 +59,7 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
   // Configurar Socket.IO
   useEffect(() => {
     if (socket && boardId) {
-      // Conectar ao board
-      socket.emit("join_board_chat", boardId);
+      socket.emit("join_board", boardId);
       setIsConnected(true);
 
       // Listener para mensagens
@@ -119,7 +118,7 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
       socket.on("connect", () => {
         console.log("Socket conectado no BoardChat");
         setIsConnected(true);
-        socket.emit("join_board_chat", boardId);
+        socket.emit("join_board", boardId);
       });
 
       socket.on("disconnect", () => {
@@ -127,11 +126,11 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
         setIsConnected(false);
       });
 
-      // Se já estiver conectado, entrar no chat imediatamente
+      // Se já estiver conectado, entrar no board imediatamente
       if (socket.connected) {
-        console.log("Socket já conectado, entrando no chat");
+        console.log("Socket já conectado, entrando no board");
         setIsConnected(true);
-        socket.emit("join_board_chat", boardId);
+        socket.emit("join_board", boardId);
       }
 
       // Listener para erros de chat
@@ -141,7 +140,7 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
       });
 
       return () => {
-        socket.emit("leave_board_chat", boardId);
+        socket.emit("leave_board", boardId);
         socket.off("chat_message");
         socket.off("users_online");
         socket.off("connect");
@@ -164,7 +163,7 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
       const response = await apiClient.get(`/boards/${boardId}/chat/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Chat Debug - Mensagens carregadas:', response.data);
+      console.log("Chat Debug - Mensagens carregadas:", response.data);
       setMessages(response.data || []);
     } catch (err: any) {
       // Se não houver endpoint de mensagens, usar array vazio
@@ -357,11 +356,11 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
             <>
               {messages.map((message) => {
                 const isOwnMessage = message.userId === currentUser.userId;
-                console.log('Chat Debug - Comparando IDs:', {
+                console.log("Chat Debug - Comparando IDs:", {
                   messageUserId: message.userId,
                   currentUserId: currentUser.userId,
                   isOwnMessage,
-                  messageText: message.message.substring(0, 20) + '...'
+                  messageText: message.message.substring(0, 20) + "...",
                 });
                 return (
                   <div
