@@ -66,10 +66,33 @@ const getNextCardOrder = async (
 };
 
 const emitCardCreatedEvent = (boardId: string, card: any) => {
-  getIO().to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_CREATED, card);
-  console.log(
-    `📡 Evento '${SOCKET_EVENTS.CARD_CREATED}' emitido para board-${boardId}`
-  );
+  try {
+    const io = getIO();
+    console.log(`📡 Emitting CARD_CREATED to board-${boardId}`);
+    console.log(`📡 Card data:`, {
+      id: card.id,
+      title: card.title,
+      columnId: card.columnId,
+    });
+
+    const roomName = `board-${boardId}`;
+    console.log(`📡 Room name: ${roomName}`);
+
+    const room = io.sockets.adapter.rooms.get(roomName);
+    console.log(`📡 Room exists: ${!!room}, Room size: ${room?.size || 0}`);
+
+    if (room && room.size > 0) {
+      console.log(`📡 Room members:`, Array.from(room));
+    }
+
+    io.to(roomName).emit(SOCKET_EVENTS.CARD_CREATED, card);
+
+    console.log(
+      `📡 Event '${SOCKET_EVENTS.CARD_CREATED}' emitted to board-${boardId}`
+    );
+  } catch (error) {
+    console.error('❌ Error emitting CARD_CREATED event:', error);
+  }
 };
 
 export const createCard = async (
@@ -179,10 +202,29 @@ const checkCardPermission = async (
 };
 
 const emitCardUpdatedEvent = (boardId: string, card: any) => {
-  getIO().to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_UPDATED, card);
-  console.log(
-    `📡 Evento '${SOCKET_EVENTS.CARD_UPDATED}' emitido para board-${boardId}`
-  );
+  try {
+    const io = getIO();
+    console.log(`📡 Emitting CARD_UPDATED to board-${boardId}`);
+    console.log(`📡 Card data:`, { id: card.id, title: card.title });
+
+    const roomName = `board-${boardId}`;
+    console.log(`📡 Room name: ${roomName}`);
+
+    const room = io.sockets.adapter.rooms.get(roomName);
+    console.log(`📡 Room exists: ${!!room}, Room size: ${room?.size || 0}`);
+
+    if (room && room.size > 0) {
+      console.log(`📡 Room members:`, Array.from(room));
+    }
+
+    io.to(roomName).emit(SOCKET_EVENTS.CARD_UPDATED, card);
+
+    console.log(
+      `📡 Event '${SOCKET_EVENTS.CARD_UPDATED}' emitted to board-${boardId}`
+    );
+  } catch (error) {
+    console.error('❌ Error emitting CARD_UPDATED event:', error);
+  }
 };
 
 export const updateCard = async (
@@ -221,12 +263,32 @@ const emitCardDeletedEvent = (
   cardId: string,
   columnId: string
 ) => {
-  getIO()
-    .to(`board-${boardId}`)
-    .emit(SOCKET_EVENTS.CARD_DELETED, { cardId, columnId });
-  console.log(
-    `📡 Evento '${SOCKET_EVENTS.CARD_DELETED}' emitido para board-${boardId}`
-  );
+  try {
+    const io = getIO();
+    console.log(`📡 Emitting CARD_DELETED to board-${boardId}`);
+    console.log(`📡 Card data:`, { cardId, columnId });
+
+    const roomName = `board-${boardId}`;
+    console.log(`📡 Room name: ${roomName}`);
+
+    const room = io.sockets.adapter.rooms.get(roomName);
+    console.log(`📡 Room exists: ${!!room}, Room size: ${room?.size || 0}`);
+
+    if (room && room.size > 0) {
+      console.log(`📡 Room members:`, Array.from(room));
+    }
+
+    io.to(roomName).emit(SOCKET_EVENTS.CARD_DELETED, {
+      cardId,
+      columnId,
+    });
+
+    console.log(
+      `📡 Event '${SOCKET_EVENTS.CARD_DELETED}' emitted to board-${boardId}`
+    );
+  } catch (error) {
+    console.error('❌ Error emitting CARD_DELETED event:', error);
+  }
 };
 
 const reorderRemainingCards = async (
@@ -294,16 +356,40 @@ const emitCardMovedEvent = (
   newOrder: number,
   card: unknown
 ) => {
-  getIO().to(`board-${boardId}`).emit(SOCKET_EVENTS.CARD_MOVED, {
-    cardId,
-    oldColumnId,
-    newColumnId,
-    newOrder,
-    card,
-  });
-  console.log(
-    `📡 Evento '${SOCKET_EVENTS.CARD_MOVED}' emitido para board-${boardId}`
-  );
+  try {
+    const io = getIO();
+    console.log(`📡 Emitting CARD_MOVED to board-${boardId}`);
+    console.log(`📡 Card data:`, {
+      cardId,
+      oldColumnId,
+      newColumnId,
+      newOrder,
+    });
+
+    const roomName = `board-${boardId}`;
+    console.log(`📡 Room name: ${roomName}`);
+
+    const room = io.sockets.adapter.rooms.get(roomName);
+    console.log(`📡 Room exists: ${!!room}, Room size: ${room?.size || 0}`);
+
+    if (room && room.size > 0) {
+      console.log(`📡 Room members:`, Array.from(room));
+    }
+
+    io.to(roomName).emit(SOCKET_EVENTS.CARD_MOVED, {
+      cardId,
+      oldColumnId,
+      newColumnId,
+      newOrder,
+      card,
+    });
+
+    console.log(
+      `📡 Event '${SOCKET_EVENTS.CARD_MOVED}' emitted to board-${boardId}`
+    );
+  } catch (error) {
+    console.error('❌ Error emitting CARD_MOVED event:', error);
+  }
 };
 
 const verifyTargetColumn = async (

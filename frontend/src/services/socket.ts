@@ -28,8 +28,10 @@ const createSocket = (): Socket => {
     transports: ["websocket", "polling"],
     timeout: 20000,
     reconnection: true,
-    reconnectionDelay: 1000,
-    reconnectionAttempts: 5,
+    reconnectionDelay: 2000,
+    reconnectionAttempts: 10,
+    reconnectionDelayMax: 10000,
+    maxReconnectionAttempts: 10,
     auth: {
       token: token,
     },
@@ -57,8 +59,12 @@ const addDebugListeners = (socket: Socket) => {
 
 export const getSocket = (): Socket => {
   console.log("getSocket called, socketInstance exists:", !!socketInstance);
-  if (!socketInstance) {
+  if (!socketInstance || socketInstance.disconnected) {
     console.log("Creating new socket instance");
+    if (socketInstance) {
+      socketInstance.removeAllListeners();
+      socketInstance.disconnect();
+    }
     socketInstance = createSocket();
     addDebugListeners(socketInstance);
     console.log("Socket instance created:", !!socketInstance);
