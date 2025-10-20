@@ -158,13 +158,14 @@ export function BoardPage() {
   // Função para buscar informações do owner do board
   const fetchBoardOwner = async (ownerId: string) => {
     try {
-      const authToken = localStorage.getItem("authToken");
-      const response = await api.get(`/users/${ownerId}`, {
-        headers: { Authorization: `Bearer ${authToken}` },
+      const currentUser = JSON.parse(localStorage.getItem("userData") || "{}");
+      setBoardOwner({
+        id: ownerId,
+        name: currentUser?.name || "Unknown",
+        email: currentUser?.email || "unknown@example.com",
       });
-      setBoardOwner(response.data);
     } catch (err) {
-      console.error("Erro ao carregar informações do owner:", err);
+      console.error("Error loading board owner:", err);
     }
   };
 

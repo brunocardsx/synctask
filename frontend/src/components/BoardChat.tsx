@@ -65,12 +65,10 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
       // Listener para mensagens
       socket.on("chat_message", (message: ChatMessage) => {
         if (message.boardId === boardId) {
-          console.log("Nova mensagem recebida:", message);
+          console.log("New message received:", message);
           setMessages((prev) => {
-            // Remover mensagem temporária se existir uma real equivalente
             const filteredPrev = prev.filter((msg) => {
               if (msg.id.startsWith("temp-")) {
-                // É uma mensagem temporária - verificar se é equivalente à mensagem real
                 const isEquivalent =
                   msg.message === message.message &&
                   msg.userId === message.userId &&
@@ -79,14 +77,13 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
                       new Date(message.createdAt).getTime()
                   ) < 5000;
                 if (isEquivalent) {
-                  console.log("Removendo mensagem temporária:", msg.id);
-                  return false; // Remove a mensagem temporária
+                  console.log("Removing temporary message:", msg.id);
+                  return false;
                 }
               }
-              return true; // Mantém a mensagem
+              return true;
             });
 
-            // Verificar se já existe uma mensagem real equivalente
             const exists = filteredPrev.some(
               (msg) =>
                 msg.id === message.id ||
@@ -99,14 +96,24 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
             );
 
             if (exists) {
-              console.log("Mensagem duplicada ignorada:", message);
+              console.log("Duplicate message ignored:", message);
               return filteredPrev;
             }
 
-            console.log("Adicionando nova mensagem:", message);
+            console.log("Adding new message:", message);
             return [...filteredPrev, message];
           });
         }
+      });
+
+      socket.on("user_joined", (data) => {
+        console.log("User joined:", data);
+        setOnlineUsers(data.users.map((u: any) => u.userId));
+      });
+
+      socket.on("user_left", (data) => {
+        console.log("User left:", data);
+        setOnlineUsers(data.users.map((u: any) => u.userId));
       });
 
       // Listener para usuários online
@@ -142,6 +149,8 @@ export function BoardChat({ boardId, currentUser }: BoardChatProps) {
       return () => {
         socket.emit("leave_board", boardId);
         socket.off("chat_message");
+        socket.off("user_joined");
+        socket.off("user_left");
         socket.off("users_online");
         socket.off("connect");
         socket.off("disconnect");
