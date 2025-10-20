@@ -12,8 +12,8 @@
     "dev:frontend": "npm run dev --prefix frontend",
     "build:backend": "npm run build --prefix backend",
     "build:frontend": "npm run build --prefix frontend",
-    "start:db": "docker-compose -f config/docker-compose.dev.yml up -d",
-    "stop:db": "docker-compose -f config/docker-compose.dev.yml down",
+    "start:db": "docker-compose -f backend/docker-compose.dev.yml up -d",
+    "stop:db": "docker-compose -f backend/docker-compose.dev.yml down",
     "setup": "npm install && npm run build:backend && npm run start:db",
     "clean": "npm run stop:db && rm -rf backend/dist backend/node_modules frontend/node_modules node_modules",
     "lint": "npm run lint --prefix backend && npm run lint --prefix frontend",
@@ -22,7 +22,9 @@
     "test": "npm run test --prefix backend && npm run test --prefix frontend",
     "test:watch": "npm run test:watch --prefix backend && npm run test:watch --prefix frontend",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "claude:check": "bash scripts/check-claude-guidelines.sh",
+    "pre-implement": "npm run claude:check"
   },
   "keywords": [],
   "author": "",
